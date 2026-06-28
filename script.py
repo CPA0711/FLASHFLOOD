@@ -29,7 +29,7 @@ __version__ = '%d.%d.%d' % VERSION[0:3]
 if sys.version_info[0:2] < (3, 5):
     raise RuntimeError('Python 3.5 or higher is required!')
 
-# Banner tanpa garis vertikal
+# Banner
 BANNER = f"""
 {Colors.CYAN}
     ███████╗██╗      █████╗ ███████╗██╗  ██╗██╗  ██╗ ██████╗  ██████╗ ██████╗ 
@@ -52,9 +52,6 @@ ua = []
 timeout = 10
 proto = ''
 url = ''
-auth = False
-auth_login = ''
-auth_pass = ''
 max_threads = 20
 request_delay = 1
 total_requests = 0
@@ -62,14 +59,13 @@ success_requests = 0
 failed_requests = 0
 lock = threading.Lock()
 start_time = 0
-use_proxy = True  # Flag untuk menggunakan proxy atau tidak
+use_proxy = True
+proxy_working = True
 
 def main(argv):
-    # Tampilkan banner
     print(BANNER)
     print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}")
-    print(f"{Colors.YELLOW}⚠️  For educational and testing purposes only!{Colors.END}")
-    print(f"{Colors.YELLOW}Use only on websites you own or have permission{Colors.END}\n")
+    print(f"{Colors.YELLOW}⚠️  For educational and testing purposes only!{Colors.END}\n")
     
     try:
         opts, args = getopt.getopt(argv, 'hv:t:', ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy'])
@@ -140,11 +136,8 @@ def main(argv):
     parseFiles()
 
 def parseFiles():
-    """Membaca file konfigurasi dengan error handling"""
     global ips, ua, ref
     
-    # Default values - kosongkan proxy default
-    default_ips = []  # Tidak ada proxy default
     default_ua = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -160,7 +153,6 @@ def parseFiles():
         'https://www.facebook.com/'
     ]
     
-    ips = default_ips.copy()
     ua = default_ua.copy()
     ref = default_ref.copy()
     
@@ -170,21 +162,22 @@ def parseFiles():
     try:
         if os.path.exists(proxy_file) and os.stat(proxy_file).st_size > 0:
             with open(proxy_file, 'r') as f:
-                content = [row.rstrip() for row in f if row.rstrip()]
+                content = [row.rstrip() for row in f if row.rstrip() and not row.startswith('#')]
                 if content:
                     ips = content
                     print(f"{Colors.GREEN}  ✓ Loaded {len(ips)} proxies from {proxy_file}{Colors.END}")
                 else:
-                    print(f"{Colors.YELLOW}  ⚠ File {proxy_file} empty, using direct connection{Colors.END}")
+                    print(f"{Colors.YELLOW}  ⚠ No valid proxies found in {proxy_file}, using direct connection{Colors.END}")
+                    ips = []
         else:
             print(f"{Colors.YELLOW}  ⚠ File {proxy_file} not found, using direct connection{Colors.END}")
-            # Buat file dengan catatan
             with open(proxy_file, 'w') as f:
                 f.write('# Add proxies here (format: ip:port)\n')
                 f.write('# Example: 192.168.1.1:8080\n')
-            print(f"{Colors.GREEN}  ✓ Created {proxy_file} - add your proxies there{Colors.END}")
+            print(f"{Colors.GREEN}  ✓ Created {proxy_file}{Colors.END}")
     except Exception as e:
         print(f"{Colors.RED}  ✗ Error reading {proxy_file}: {e}{Colors.END}")
+        ips = []
     
     # Baca user-agents
     try:
@@ -200,7 +193,7 @@ def parseFiles():
             print(f"{Colors.YELLOW}  ⚠ File {ua_file} not found, creating default{Colors.END}")
             with open(ua_file, 'w') as f:
                 f.write('\n'.join(default_ua))
-            print(f"{Colors.GREEN}  ✓ Created {ua_file} with default user-agents{Colors.END}")
+            print(f"{Colors.GREEN}  ✓ Created {ua_file}{Colors.END}")
     except Exception as e:
         print(f"{Colors.RED}  ✗ Error reading {ua_file}: {e}{Colors.END}")
     
@@ -218,16 +211,15 @@ def parseFiles():
             print(f"{Colors.YELLOW}  ⚠ File {ref_file} not found, creating default{Colors.END}")
             with open(ref_file, 'w') as f:
                 f.write('\n'.join(default_ref))
-            print(f"{Colors.GREEN}  ✓ Created {ref_file} with default referers{Colors.END}")
+            print(f"{Colors.GREEN}  ✓ Created {ref_file}{Colors.END}")
     except Exception as e:
         print(f"{Colors.RED}  ✗ Error reading {ref_file}: {e}{Colors.END}")
     
-    proxy_status = f"{len(ips)} proxies" if ips else "Direct connection (no proxy)"
+    proxy_status = f"{len(ips)} proxies" if ips and use_proxy else "Direct connection"
     print(f"{Colors.CYAN}📊 Summary: {proxy_status}, {len(ua)} user-agents, {len(ref)} referers{Colors.END}\n")
     testConnection()
 
 def testConnection():
-    """Testing koneksi ke URL"""
     print(f"{Colors.CYAN}🔗 Testing Connection{Colors.END}")
     print(f"{Colors.WHITE}Target URL: {Colors.GREEN}{url}{Colors.END}")
     
@@ -247,21 +239,24 @@ def testConnection():
         sys.exit(1)
 
 def request_testing(index):
-    """Testing request dengan rate limiting"""
-    global total_requests, success_requests, failed_requests
+    global total_requests, success_requests, failed_requests, proxy_working
     
-    proxy_list = ips.copy() if ips else []
+    proxy_list = ips.copy() if ips and use_proxy else []
     proxy_index = index % len(proxy_list) if proxy_list else 0
+    direct_fallback = False
     
     while not ex.is_set():
         try:
-            # Pilih proxy hanya jika ada dan use_proxy True
+            # Pilih proxy
             proxy = None
-            if use_proxy and proxy_list:
+            proxy_str = 'Direct'
+            
+            if proxy_list and not direct_fallback:
                 proxy = {
                     'http': f'http://{proxy_list[proxy_index]}',
                     'https': f'http://{proxy_list[proxy_index]}'
                 }
+                proxy_str = proxy_list[proxy_index]
                 proxy_index = (proxy_index + 1) % len(proxy_list)
             
             # Headers
@@ -278,13 +273,20 @@ def request_testing(index):
             # Kirim request
             start_time_req = time.time()
             if proxy:
-                r = requests.get(url, headers=headers, proxies=proxy, timeout=timeout)
+                try:
+                    r = requests.get(url, headers=headers, proxies=proxy, timeout=timeout)
+                except:
+                    # Jika proxy gagal, fallback ke direct
+                    direct_fallback = True
+                    proxy = None
+                    proxy_str = 'Direct (fallback)'
+                    r = requests.get(url, headers=headers, timeout=timeout)
             else:
                 r = requests.get(url, headers=headers, timeout=timeout)
             
             response_time = time.time() - start_time_req
             
-            # Update global stats
+            # Update stats
             with lock:
                 total_requests += 1
                 if r.status_code == 200:
@@ -294,19 +296,20 @@ def request_testing(index):
                     failed_requests += 1
                     status_color = Colors.YELLOW
             
-            # Log dengan format yang rapi
-            proxy_str = proxy_list[proxy_index-1] if proxy_list and use_proxy else 'Direct'
             print(f"{status_color}[{index:>2}] {r.status_code:>3} | {response_time:>5.2f}s | {proxy_str}{Colors.END}")
+            
+            # Jika proxy berhasil, kembali ke mode proxy
+            if direct_fallback and proxy_list:
+                direct_fallback = False
+                print(f"{Colors.GREEN}[{index:>2}] Switching back to proxy mode{Colors.END}")
             
             time.sleep(request_delay)
             
         except requests.exceptions.ProxyError:
             print(f"{Colors.RED}[{index:>2}] PROXY ERROR | {proxy_list[proxy_index-1] if proxy_list else 'None'}{Colors.END}")
-            # Jika proxy error, coba tanpa proxy
             if proxy_list:
-                proxy_list.pop(proxy_index - 1)
-                if not proxy_list:
-                    print(f"{Colors.YELLOW}⚠️  No proxies left, switching to direct connection{Colors.END}")
+                direct_fallback = True
+                print(f"{Colors.YELLOW}[{index:>2}] Falling back to direct connection{Colors.END}")
             time.sleep(0.5)
         except requests.exceptions.Timeout:
             print(f"{Colors.YELLOW}[{index:>2}] TIMEOUT | {timeout}s{Colors.END}")
@@ -319,13 +322,14 @@ def request_testing(index):
             with lock:
                 total_requests += 1
                 failed_requests += 1
+            if proxy_list:
+                direct_fallback = True
             time.sleep(1)
         except Exception as e:
             print(f"{Colors.RED}[{index:>2}] ERROR: {str(e)[:30]}{Colors.END}")
             time.sleep(1)
 
 def startTesting():
-    """Start testing dengan thread management"""
     global start_time
     start_time = time.time()
     
@@ -336,7 +340,7 @@ def startTesting():
     print(f"{Colors.YELLOW}Press Ctrl+C to stop{Colors.END}\n")
     
     threads = []
-    thread_count = min(max_threads, max(1, len(ips) if ips and use_proxy else 1))
+    thread_count = max_threads
     
     print(f"{Colors.DIM}─── Request Log ───{Colors.END}")
     
@@ -349,7 +353,6 @@ def startTesting():
     try:
         while True:
             time.sleep(1)
-            # Show stats every 5 seconds
             if int(time.time()) % 5 == 0:
                 elapsed = time.time() - start_time
                 with lock:
@@ -371,7 +374,6 @@ def startTesting():
         for t in threads:
             t.join(timeout=2)
         
-        # Final stats
         elapsed = time.time() - start_time
         print(f"\n{Colors.CYAN}📊 FINAL STATISTICS{Colors.END}")
         print(f"{Colors.WHITE}Total Time    : {Colors.GREEN}{elapsed:.1f}s{Colors.END}")
@@ -393,35 +395,25 @@ def showUsage():
     python script.py {Colors.CYAN}--url{Colors.END} <URL> {Colors.DIM}[OPTIONS]{Colors.END}
 
 {Colors.GREEN}OPTIONS:{Colors.END}
-    {Colors.CYAN}-v, --url{Colors.END} <URL>       Target URL to test {Colors.RED}(required){Colors.END}
-    {Colors.CYAN}-t, --timeout{Colors.END} <SEC>   Timeout in seconds {Colors.DIM}(default: 10){Colors.END}
-    {Colors.CYAN}--threads{Colors.END} <NUM>       Number of threads {Colors.DIM}(default: 20, max: 100){Colors.END}
-    {Colors.CYAN}--delay{Colors.END} <SEC>         Delay between requests {Colors.DIM}(default: 1.0){Colors.END}
-    {Colors.CYAN}--no-proxy{Colors.END}            Disable proxy, use direct connection
-    {Colors.CYAN}-h, --help{Colors.END}            Show this help message
+    {Colors.CYAN}-v, --url{Colors.END} <URL>       Target URL {Colors.RED}(required){Colors.END}
+    {Colors.CYAN}-t, --timeout{Colors.END} <SEC>   Timeout (default: 10)
+    {Colors.CYAN}--threads{Colors.END} <NUM>       Threads (default: 20, max: 100)
+    {Colors.CYAN}--delay{Colors.END} <SEC>         Delay between requests (default: 1.0)
+    {Colors.CYAN}--no-proxy{Colors.END}            Disable proxy
+    {Colors.CYAN}-h, --help{Colors.END}            Help
 
 {Colors.GREEN}EXAMPLES:{Colors.END}
-    {Colors.WHITE}python script.py --url https://example.com{Colors.END}
-    {Colors.WHITE}python script.py --url https://example.com --timeout 5 --threads 10{Colors.END}
-    {Colors.WHITE}python script.py --url https://example.com --delay 0.5 --threads 50{Colors.END}
-    {Colors.WHITE}python script.py --url https://example.com --no-proxy{Colors.END}
-
-{Colors.GREEN}FILES:{Colors.END}
-    {Colors.CYAN}proxy.txt{Colors.END}         - List of proxies {Colors.DIM}(format: ip:port){Colors.END}
-    {Colors.CYAN}user-agents.txt{Colors.END}   - List of User-Agent strings
-    {Colors.CYAN}referers.txt{Colors.END}      - List of Referer URLs
-
-{Colors.YELLOW}⚠️  WARNING:{Colors.END}
-    {Colors.RED}Use only on websites you own or have explicit permission to test!{Colors.END}
-    {Colors.RED}Unauthorized testing may be illegal in your jurisdiction.{Colors.END}
-    """)
+    python script.py --url https://example.com
+    python script.py --url https://example.com --no-proxy
+    python script.py --url https://example.com --threads 50 --delay 0.5
+{Colors.END}""")
 
 if __name__ == '__main__':
     try:
         main(sys.argv[1:])
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.YELLOW}🛑 Program interrupted by user{Colors.END}")
+        print(f"\n\n{Colors.YELLOW}🛑 Interrupted{Colors.END}")
         sys.exit(0)
     except Exception as e:
-        print(f"\n{Colors.RED}❌ Unexpected error: {e}{Colors.END}")
+        print(f"\n{Colors.RED}❌ Error: {e}{Colors.END}")
         sys.exit(1)
