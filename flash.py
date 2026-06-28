@@ -29,20 +29,19 @@ __version__ = '%d.%d.%d' % VERSION[0:3]
 if sys.version_info[0:2] < (3, 5):
     raise RuntimeError('Python 3.5 or higher is required!')
 
-# Banner 1 baris FLASHFLOOD
+# Banner kecil 4 baris
 BANNER = f"""
-{Colors.CYAN}╔════════════════════════════════════════════════════════════════════════════════╗
-║                                                                                        ║
-║   {Colors.BOLD}{Colors.CYAN}███████╗██╗      █████╗ ███████╗██╗  ██╗███████╗██╗      ██████╗  ██████╗  ██████╗ ██████╗ {Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN}██╔════╝██║     ██╔══██╗██╔════╝██║  ██║██╔════╝██║     ██╔═══██╗██╔═══██╗██╔═══██╗██╔══██╗{Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN}█████╗  ██║     ███████║███████╗███████║█████╗  ██║     ██║   ██║██║   ██║██║   ██║██████╔╝{Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN}██╔══╝  ██║     ██╔══██║╚════██║██╔══██║██╔══╝  ██║     ██║   ██║██║   ██║██║   ██║██╔══██╗{Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN}██║     ███████╗██║  ██║███████║██║  ██║██║     ███████╗╚██████╔╝╚██████╔╝╚██████╔╝██║  ██║{Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN}╚═╝     ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝  ╚═╝{Colors.END} ║
-║                                                                                        ║
-║              {Colors.WHITE}⚡ HTTP Request Tester & Load Testing Tool v{__version__}{Colors.CYAN}              ║
-║                                                                                        ║
-╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}
+{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║    {Colors.BOLD}{Colors.CYAN}███████ ██       █████  ███████ ██   ██ ███████ ██       ██████   ██████  ██████  
+                                 ██      ██      ██   ██ ██      ██   ██ ██      ██      ██    ██ ██    ██ ██   ██ 
+                                 █████   ██      ███████ ███████ ███████ █████   ██      ██    ██ ██    ██ ██   ██ 
+                                 ██      ██      ██   ██      ██ ██   ██ ██      ██      ██    ██ ██    ██ ██   ██ 
+                                 ██      ███████ ██   ██ ███████ ██   ██ ██      ███████  ██████   ██████  ██████  
+                                                                                  
+                                                                                  
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════╝{Colors.END}
 """
 
 # File konfigurasi
@@ -71,12 +70,12 @@ start_time = 0
 def main(argv):
     # Tampilkan banner
     print(BANNER)
-    print(f"{Colors.CYAN}╔════════════════════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  🚀 CPA FLASHFLOOD v{__version__} - Advanced HTTP Load Tester{Colors.CYAN}                    ║{Colors.END}")
-    print(f"{Colors.CYAN}╠════════════════════════════════════════════════════════════════════════════════╣{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠️  For educational and testing purposes only!{Colors.CYAN}                                     ║{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.YELLOW}  Use only on websites you own or have explicit permission to test{Colors.CYAN}                   ║{Colors.END}")
-    print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+    print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.WHITE}  🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.CYAN}                    ║{Colors.END}")
+    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠️  For educational and testing purposes only!{Colors.CYAN}                         ║{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.YELLOW}  Use only on websites you own or have permission{Colors.CYAN}                       ║{Colors.END}")
+    print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
     
     try:
         opts, args = getopt.getopt(argv, 'hv:t:', ['help', 'url=', 'timeout=', 'threads=', 'delay='])
@@ -167,9 +166,9 @@ def parseFiles():
     ua = default_ua.copy()
     ref = default_ref.copy()
     
-    print(f"{Colors.CYAN}╔════════════════════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  📁 Loading Configuration Files{Colors.CYAN}                                                ║{Colors.END}")
-    print(f"{Colors.CYAN}╠════════════════════════════════════════════════════════════════════════════════╣{Colors.END}")
+    print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.WHITE}  📁 Loading Configuration Files{Colors.CYAN}                                        ║{Colors.END}")
+    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
     
     # Baca proxy
     try:
@@ -178,16 +177,16 @@ def parseFiles():
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ips = content
-                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ips):>3} proxies from {proxy_file}{Colors.CYAN}{' ' * (60 - len(str(len(ips))) - len(proxy_file))}║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ips):>3} proxies from {proxy_file}{Colors.CYAN}{' ' * (50 - len(str(len(ips))) - len(proxy_file))}║{Colors.END}")
                 else:
-                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {proxy_file} empty, using default{Colors.CYAN}{' ' * (60 - len(proxy_file))}║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {proxy_file} empty, using default{Colors.CYAN}{' ' * (50 - len(proxy_file))}║{Colors.END}")
         else:
-            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {proxy_file} not found, creating default{Colors.CYAN}{' ' * (58 - len(proxy_file))}║{Colors.END}")
+            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {proxy_file} not found, creating default{Colors.CYAN}{' ' * (48 - len(proxy_file))}║{Colors.END}")
             with open(proxy_file, 'w') as f:
                 f.write('\n'.join(default_ips))
-            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {proxy_file} with default proxies{Colors.CYAN}{' ' * (60 - len(proxy_file))}║{Colors.END}")
+            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {proxy_file} with default proxies{Colors.CYAN}{' ' * (50 - len(proxy_file))}║{Colors.END}")
     except Exception as e:
-        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {proxy_file}: {e}{Colors.CYAN}{' ' * (60 - len(proxy_file) - len(str(e))) }║{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {proxy_file}: {e}{Colors.CYAN}{' ' * (50 - len(proxy_file) - len(str(e)))}║{Colors.END}")
     
     # Baca user-agents
     try:
@@ -196,16 +195,16 @@ def parseFiles():
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ua = content
-                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ua):>3} user-agents from {ua_file}{Colors.CYAN}{' ' * (57 - len(str(len(ua))) - len(ua_file))}║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ua):>3} user-agents from {ua_file}{Colors.CYAN}{' ' * (47 - len(str(len(ua))) - len(ua_file))}║{Colors.END}")
                 else:
-                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ua_file} empty, using default{Colors.CYAN}{' ' * (60 - len(ua_file))}║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ua_file} empty, using default{Colors.CYAN}{' ' * (50 - len(ua_file))}║{Colors.END}")
         else:
-            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ua_file} not found, creating default{Colors.CYAN}{' ' * (58 - len(ua_file))}║{Colors.END}")
+            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ua_file} not found, creating default{Colors.CYAN}{' ' * (48 - len(ua_file))}║{Colors.END}")
             with open(ua_file, 'w') as f:
                 f.write('\n'.join(default_ua))
-            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {ua_file} with default user-agents{Colors.CYAN}{' ' * (55 - len(ua_file))}║{Colors.END}")
+            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {ua_file} with default user-agents{Colors.CYAN}{' ' * (45 - len(ua_file))}║{Colors.END}")
     except Exception as e:
-        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {ua_file}: {e}{Colors.CYAN}{' ' * (60 - len(ua_file) - len(str(e)))}║{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {ua_file}: {e}{Colors.CYAN}{' ' * (50 - len(ua_file) - len(str(e)))}║{Colors.END}")
     
     # Baca referers
     try:
@@ -214,44 +213,44 @@ def parseFiles():
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ref = content
-                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ref):>3} referers from {ref_file}{Colors.CYAN}{' ' * (57 - len(str(len(ref))) - len(ref_file))}║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ref):>3} referers from {ref_file}{Colors.CYAN}{' ' * (47 - len(str(len(ref))) - len(ref_file))}║{Colors.END}")
                 else:
-                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ref_file} empty, using default{Colors.CYAN}{' ' * (60 - len(ref_file))}║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ref_file} empty, using default{Colors.CYAN}{' ' * (50 - len(ref_file))}║{Colors.END}")
         else:
-            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ref_file} not found, creating default{Colors.CYAN}{' ' * (58 - len(ref_file))}║{Colors.END}")
+            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ref_file} not found, creating default{Colors.CYAN}{' ' * (48 - len(ref_file))}║{Colors.END}")
             with open(ref_file, 'w') as f:
                 f.write('\n'.join(default_ref))
-            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {ref_file} with default referers{Colors.CYAN}{' ' * (55 - len(ref_file))}║{Colors.END}")
+            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {ref_file} with default referers{Colors.CYAN}{' ' * (45 - len(ref_file))}║{Colors.END}")
     except Exception as e:
-        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {ref_file}: {e}{Colors.CYAN}{' ' * (60 - len(ref_file) - len(str(e)))}║{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {ref_file}: {e}{Colors.CYAN}{' ' * (50 - len(ref_file) - len(str(e)))}║{Colors.END}")
     
-    print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+    print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
     testConnection()
 
 def testConnection():
     """Testing koneksi ke URL"""
-    print(f"{Colors.CYAN}╔════════════════════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  🔗 Testing Connection{Colors.CYAN}                                                       ║{Colors.END}")
-    print(f"{Colors.CYAN}╠════════════════════════════════════════════════════════════════════════════════╣{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  Target URL: {Colors.GREEN}{url}{Colors.CYAN}{' ' * (60 - len(url))}║{Colors.END}")
+    print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.WHITE}  🔗 Testing Connection{Colors.CYAN}                                               ║{Colors.END}")
+    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.WHITE}  Target URL: {Colors.GREEN}{url}{Colors.CYAN}{' ' * (50 - len(url))}║{Colors.END}")
     
     try:
         r = requests.get(url, timeout=timeout)
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Status: {Colors.GREEN}{r.status_code} {Colors.WHITE}| Size: {Colors.GREEN}{len(r.content)} bytes{Colors.CYAN}{' ' * (54 - len(str(r.status_code)) - len(str(len(r.content))))}║{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.GREEN}  ✅ Connection successful!{Colors.CYAN}{' ' * 59}║{Colors.END}")
-        print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+        print(f"{Colors.CYAN}║{Colors.WHITE}  Status: {Colors.GREEN}{r.status_code} {Colors.WHITE}| Size: {Colors.GREEN}{len(r.content)} bytes{Colors.CYAN}{' ' * (44 - len(str(r.status_code)) - len(str(len(r.content))))}║{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.GREEN}  ✅ Connection successful!{Colors.CYAN}{' ' * 49}║{Colors.END}")
+        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
         startTesting()
     except requests.exceptions.Timeout:
-        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection timeout after {timeout}s{Colors.CYAN}{' ' * (57 - len(str(timeout)))}║{Colors.END}")
-        print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection timeout after {timeout}s{Colors.CYAN}{' ' * (47 - len(str(timeout)))}║{Colors.END}")
+        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}")
         sys.exit(1)
     except requests.exceptions.ConnectionError:
-        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection error: Unable to reach {url}{Colors.CYAN}{' ' * (60 - len(url))}║{Colors.END}")
-        print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection error: Unable to reach {url}{Colors.CYAN}{' ' * (50 - len(url))}║{Colors.END}")
+        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}")
         sys.exit(1)
     except Exception as e:
-        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection failed: {e}{Colors.CYAN}{' ' * (60 - len(str(e)))}║{Colors.END}")
-        print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection failed: {e}{Colors.CYAN}{' ' * (50 - len(str(e)))}║{Colors.END}")
+        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}")
         sys.exit(1)
 
 def request_testing(index):
@@ -332,12 +331,12 @@ def startTesting():
     global start_time
     start_time = time.time()
     
-    print(f"{Colors.CYAN}╔════════════════════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.GREEN}  🚀 Starting FLASHFLOOD Attack{Colors.CYAN}                                             ║{Colors.END}")
-    print(f"{Colors.CYAN}╠════════════════════════════════════════════════════════════════════════════════╣{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  Threads : {Colors.GREEN}{max_threads:>3}{Colors.CYAN}  |  Timeout: {Colors.GREEN}{timeout:>3}s{Colors.CYAN}  |  Delay: {Colors.GREEN}{request_delay:>4.1f}s{Colors.CYAN}{' ' * (58 - len(str(max_threads)) - len(str(timeout)) - len(str(request_delay)))}║{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.YELLOW}  Press Ctrl+C to stop{Colors.CYAN}{' ' * 59}║{Colors.END}")
-    print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+    print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.GREEN}  🚀 Starting FLASHFLOOD Attack{Colors.CYAN}                                     ║{Colors.END}")
+    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.WHITE}  Threads: {Colors.GREEN}{max_threads:>3}{Colors.CYAN} | Timeout: {Colors.GREEN}{timeout:>3}s{Colors.CYAN} | Delay: {Colors.GREEN}{request_delay:>4.1f}s{Colors.CYAN}{' ' * (47 - len(str(max_threads)) - len(str(timeout)) - len(str(request_delay)))}║{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.YELLOW}  Press Ctrl+C to stop{Colors.CYAN}{' ' * 49}║{Colors.END}")
+    print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
     
     threads = []
     thread_count = min(max_threads, max(1, len(ips) if ips else 1))
@@ -357,24 +356,24 @@ def startTesting():
             if int(time.time()) % 5 == 0:
                 elapsed = time.time() - start_time
                 with lock:
-                    print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════════════════════════════════════╗{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  📊 REAL-TIME STATISTICS{Colors.CYAN}                                              ║{Colors.END}")
-                    print(f"{Colors.CYAN}╠════════════════════════════════════════════════════════════════════════════════╣{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Elapsed Time : {Colors.GREEN}{elapsed:>8.1f}s{Colors.CYAN}                                      ║{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Requests     : {Colors.GREEN}{total_requests:>8,}{Colors.CYAN}                                      ║{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Success      : {Colors.GREEN}{success_requests:>8,}{Colors.CYAN}                                      ║{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Failed       : {Colors.RED}{failed_requests:>8,}{Colors.CYAN}                                      ║{Colors.END}")
+                    print(f"\n{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.WHITE}  📊 REAL-TIME STATISTICS{Colors.CYAN}                                      ║{Colors.END}")
+                    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.WHITE}  Elapsed Time : {Colors.GREEN}{elapsed:>8.1f}s{Colors.CYAN}                              ║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.WHITE}  Requests     : {Colors.GREEN}{total_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.WHITE}  Success      : {Colors.GREEN}{success_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.WHITE}  Failed       : {Colors.RED}{failed_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
                     if total_requests > 0:
                         success_rate = (success_requests / total_requests) * 100
-                        print(f"{Colors.CYAN}║{Colors.WHITE}  Success Rate : {Colors.GREEN}{success_rate:>7.2f}%{Colors.CYAN}                                      ║{Colors.END}")
+                        print(f"{Colors.CYAN}║{Colors.WHITE}  Success Rate : {Colors.GREEN}{success_rate:>7.2f}%{Colors.CYAN}                              ║{Colors.END}")
                         req_per_sec = total_requests / elapsed if elapsed > 0 else 0
-                        print(f"{Colors.CYAN}║{Colors.WHITE}  Requests/s   : {Colors.GREEN}{req_per_sec:>8.2f}{Colors.CYAN}                                      ║{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Active Threads: {Colors.YELLOW}{len([t for t in threads if t.is_alive()]):>8}{Colors.CYAN}                                      ║{Colors.END}")
-                    print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+                        print(f"{Colors.CYAN}║{Colors.WHITE}  Requests/s   : {Colors.GREEN}{req_per_sec:>8.2f}{Colors.CYAN}                              ║{Colors.END}")
+                    print(f"{Colors.CYAN}║{Colors.WHITE}  Active Thrd  : {Colors.YELLOW}{len([t for t in threads if t.is_alive()]):>8}{Colors.CYAN}                              ║{Colors.END}")
+                    print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.RED}╔════════════════════════════════════════════════════════════════════════════════╗{Colors.END}")
-        print(f"{Colors.RED}║{Colors.YELLOW}  🛑 Stopping FLASHFLOOD...{Colors.RED}                                               ║{Colors.END}")
-        print(f"{Colors.RED}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}")
+        print(f"\n\n{Colors.RED}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
+        print(f"{Colors.RED}║{Colors.YELLOW}  🛑 Stopping FLASHFLOOD...{Colors.RED}                                       ║{Colors.END}")
+        print(f"{Colors.RED}╚══════════════════════════════════════════════════════════════════╝{Colors.END}")
         ex.set()
         print(f"{Colors.CYAN}⏳ Waiting for threads to finish...{Colors.END}")
         for t in threads:
@@ -382,28 +381,28 @@ def startTesting():
         
         # Final stats
         elapsed = time.time() - start_time
-        print(f"\n{Colors.CYAN}╔════════════════════════════════════════════════════════════════════════════════╗{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.GREEN}  ✅ FLASHFLOOD Stopped Successfully!{Colors.CYAN}                                         ║{Colors.END}")
-        print(f"{Colors.CYAN}╠════════════════════════════════════════════════════════════════════════════════╣{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  FINAL STATISTICS{Colors.CYAN}                                                       ║{Colors.END}")
-        print(f"{Colors.CYAN}╠════════════════════════════════════════════════════════════════════════════════╣{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Total Time    : {Colors.GREEN}{elapsed:>8.1f}s{Colors.CYAN}                                      ║{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Total Requests: {Colors.GREEN}{total_requests:>8,}{Colors.CYAN}                                      ║{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Successful    : {Colors.GREEN}{success_requests:>8,}{Colors.CYAN}                                      ║{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Failed        : {Colors.RED}{failed_requests:>8,}{Colors.CYAN}                                      ║{Colors.END}")
+        print(f"\n{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.GREEN}  ✅ FLASHFLOOD Stopped Successfully!{Colors.CYAN}                                 ║{Colors.END}")
+        print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.WHITE}  FINAL STATISTICS{Colors.CYAN}                                               ║{Colors.END}")
+        print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.WHITE}  Total Time    : {Colors.GREEN}{elapsed:>8.1f}s{Colors.CYAN}                              ║{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.WHITE}  Total Requests: {Colors.GREEN}{total_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.WHITE}  Successful    : {Colors.GREEN}{success_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
+        print(f"{Colors.CYAN}║{Colors.WHITE}  Failed        : {Colors.RED}{failed_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
         if total_requests > 0:
             success_rate = (success_requests / total_requests) * 100
-            print(f"{Colors.CYAN}║{Colors.WHITE}  Success Rate  : {Colors.GREEN}{success_rate:>7.2f}%{Colors.CYAN}                                      ║{Colors.END}")
+            print(f"{Colors.CYAN}║{Colors.WHITE}  Success Rate  : {Colors.GREEN}{success_rate:>7.2f}%{Colors.CYAN}                              ║{Colors.END}")
             req_per_sec = total_requests / elapsed if elapsed > 0 else 0
-            print(f"{Colors.CYAN}║{Colors.WHITE}  Average RPS   : {Colors.GREEN}{req_per_sec:>8.2f}{Colors.CYAN}                                      ║{Colors.END}")
-        print(f"{Colors.CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+            print(f"{Colors.CYAN}║{Colors.WHITE}  Average RPS   : {Colors.GREEN}{req_per_sec:>8.2f}{Colors.CYAN}                              ║{Colors.END}")
+        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
 
 def showUsage():
     print(f"""
-{Colors.CYAN}╔════════════════════════════════════════════════════════════════════════════════╗
-║                     CPA FLASHFLOOD v{__version__}                                      ║
-║                   Advanced HTTP Request Tester & Load Testing Tool                      ║
-╚════════════════════════════════════════════════════════════════════════════════╝{Colors.END}
+{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗
+║                  CPA FLASHFLOOD v{__version__}                           ║
+║                HTTP Request Tester & Load Testing Tool                   ║
+╚══════════════════════════════════════════════════════════════════╝{Colors.END}
 
 {Colors.GREEN}USAGE:{Colors.END}
     python script.py {Colors.CYAN}--url{Colors.END} <URL> {Colors.DIM}[OPTIONS]{Colors.END}
