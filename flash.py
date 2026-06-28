@@ -32,13 +32,13 @@ if sys.version_info[0:2] < (3, 5):
 # Banner kecil 4 baris
 BANNER = f"""
 {Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗
-║   {Colors.BOLD}{Colors.CYAN}█████ █      ███   ████ █   █ █████ █      ███   ███  ████       {Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN}█░░░░░█░    █ ░░█ █ ░░░░█░  █░█░░░░░█░    █ ░░█ █ ░░█ █░░░█ {Colors.END} ║  
-║   {Colors.BOLD}{Colors.CYAN}████░░█░░   █████░ ███░░█████░████░░█░░   █░ ░█░█░ ░█░█░░░█░ {Colors.END} ║ 
-║   {Colors.BOLD}{Colors.CYAN}█░░░░ █░░   █░░░█░░ ░░█ █░░░█░█░░░░ █░░   █░░ █░█░░ █░█░░ █░░ {Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN}█░░░░░█████ █░░░█░████░░█░░░█░█░░░░░█████  ███ ░░███ ░████ ░░ {Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN} ░░    ░░░░░ ░░  ░░░░░░ ░░░  ░░░░    ░░░░░  ░░░ ░ ░░░ ░░░░░ ░ {Colors.END} ║
-║   {Colors.BOLD}{Colors.CYAN}  ░     ░░░░░ ░   ░ ░░░░  ░   ░ ░     ░░░░░  ░░░   ░░░  ░░░░      {Colors.END} ║║
+║   {Colors.BOLD}{Colors.CYAN}█████ █      ███   ████ █   █ █████ █      ███   ███  ████                       ║
+║   {Colors.BOLD}{Colors.CYAN}█░░░░░█░    █ ░░█ █ ░░░░█░  █░█░░░░░█░    █ ░░█ █ ░░█ █░░░█             ║  
+║   {Colors.BOLD}{Colors.CYAN}████░░█░░   █████░ ███░░█████░████░░█░░   █░ ░█░█░ ░█░█░░░█░     ║ 
+║   {Colors.BOLD}{Colors.CYAN}█░░░░ █░░   █░░░█░░ ░░█ █░░░█░█░░░░ █░░   █░░ █░█░░ █░█░░ █░░       ║
+║   {Colors.BOLD}{Colors.CYAN}█░░░░░█████ █░░░█░████░░█░░░█░█░░░░░█████  ███ ░░███ ░████ ░░ ║
+║   {Colors.BOLD}{Colors.CYAN} ░░    ░░░░░ ░░  ░░░░░░ ░░░  ░░░░    ░░░░░  ░░░ ░ ░░░ ░░░░░ ░             ║
+║   {Colors.BOLD}{Colors.CYAN}  ░     ░░░░░ ░   ░ ░░░░  ░   ░ ░     ░░░░░  ░░░   ░░░  ░░░░                      ║
 ╚══════════════════════════════════════════════════════════════════╝{Colors.END}
 """
 
