@@ -29,18 +29,16 @@ __version__ = '%d.%d.%d' % VERSION[0:3]
 if sys.version_info[0:2] < (3, 5):
     raise RuntimeError('Python 3.5 or higher is required!')
 
-# Banner kecil 4 baris
+# Banner tanpa garis vertikal
 BANNER = f"""
-{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗
-    {Colors.BOLD}{Colors.CYAN}█████ █      ███   ████ █   █ █████ █      ███   ███  ████         {Colors.END}
-    {Colors.BOLD}{Colors.CYAN}█░░░░░█░    █ ░░█ █ ░░░░█░  █░█░░░░░█░    █ ░░█ █ ░░█ █░░░█  {Colors.END}  
-    {Colors.BOLD}{Colors.CYAN}████░░█░░   █████░ ███░░█████░████░░█░░   █░ ░█░█░ ░█░█░░░█░  {Colors.END}
-    {Colors.BOLD}{Colors.CYAN}█░░░░ █░░   █░░░█░░ ░░█ █░░░█░█░░░░ █░░   █░░ █░█░░ █░█░░ █░░ {Colors.END}
-    {Colors.BOLD}{Colors.CYAN}█░░░░░█████ █░░░█░████░░█░░░█░█░░░░░█████  ███ ░░███ ░████ ░░{Colors.END}
-    {Colors.BOLD}{Colors.CYAN} ░░    ░░░░░ ░░  ░░░░░░ ░░░  ░░░░    ░░░░░  ░░░ ░ ░░░ ░░░░░ ░ {Colors.END}
-    {Colors.BOLD}{Colors.CYAN}  ░     ░░░░░ ░   ░ ░░░░  ░   ░ ░     ░░░░░  ░░░   ░░░  ░░░░      {Colors.END}
-{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}
-"""
+{Colors.CYAN}
+    ███████╗██╗      █████╗ ███████╗██╗  ██╗██╗  ██╗ ██████╗  ██████╗ ██████╗ 
+    ██╔════╝██║     ██╔══██╗██╔════╝██║  ██║██║  ██║██╔═══██╗██╔═══██╗██╔══██╗
+    █████╗  ██║     ███████║███████╗███████║███████║██║   ██║██║   ██║██████╔╝
+    ██╔══╝  ██║     ██╔══██║╚════██║██╔══██║██╔══██║██║   ██║██║   ██║██╔══██╗
+    ██║     ███████╗██║  ██║███████║██║  ██║██║  ██║╚██████╔╝╚██████╔╝██║  ██║
+    ╚═╝     ╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝
+{Colors.END}"""
 
 # File konfigurasi
 proxy_file = 'proxy.txt'
@@ -64,19 +62,17 @@ success_requests = 0
 failed_requests = 0
 lock = threading.Lock()
 start_time = 0
+use_proxy = True  # Flag untuk menggunakan proxy atau tidak
 
 def main(argv):
     # Tampilkan banner
     print(BANNER)
-    print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.CYAN}                     ║{Colors.END}")
-    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠️  For educational and testing purposes only!{Colors.CYAN}                   ║{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.YELLOW}  Use only on websites you own or have permission{Colors.CYAN}                 ║{Colors.END}")
-    print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+    print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}")
+    print(f"{Colors.YELLOW}⚠️  For educational and testing purposes only!{Colors.END}")
+    print(f"{Colors.YELLOW}Use only on websites you own or have permission{Colors.END}\n")
     
     try:
-        opts, args = getopt.getopt(argv, 'hv:t:', ['help', 'url=', 'timeout=', 'threads=', 'delay='])
+        opts, args = getopt.getopt(argv, 'hv:t:', ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy'])
     except getopt.GetoptError as err:
         print(f"{Colors.RED}✗ Error: {err}{Colors.END}")
         showUsage()
@@ -131,6 +127,10 @@ def main(argv):
             except ValueError:
                 print(f"{Colors.RED}✗ Error: Delay must be number{Colors.END}")
                 sys.exit(2)
+        elif opt == '--no-proxy':
+            global use_proxy
+            use_proxy = False
+            print(f"{Colors.YELLOW}⚠️  Proxy disabled, using direct connection{Colors.END}")
     
     if not url:
         print(f"{Colors.RED}✗ Error: URL is required!{Colors.END}")
@@ -143,14 +143,14 @@ def parseFiles():
     """Membaca file konfigurasi dengan error handling"""
     global ips, ua, ref
     
-    # Default values
-    default_ips = ['127.0.0.1:8080']
+    # Default values - kosongkan proxy default
+    default_ips = []  # Tidak ada proxy default
     default_ua = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15'
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
     ]
     default_ref = [
         'https://www.google.com/',
@@ -164,9 +164,7 @@ def parseFiles():
     ua = default_ua.copy()
     ref = default_ref.copy()
     
-    print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  📁 Loading Configuration Files{Colors.CYAN}                                  ║{Colors.END}")
-    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
+    print(f"{Colors.CYAN}📁 Loading Configuration Files{Colors.END}")
     
     # Baca proxy
     try:
@@ -175,16 +173,18 @@ def parseFiles():
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ips = content
-                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ips):>3} proxies from {proxy_file}{Colors.CYAN}{' ' * (50 - len(str(len(ips))) - len(proxy_file))}║{Colors.END}")
+                    print(f"{Colors.GREEN}  ✓ Loaded {len(ips)} proxies from {proxy_file}{Colors.END}")
                 else:
-                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {proxy_file} empty, using default{Colors.CYAN}{' ' * (50 - len(proxy_file))}║{Colors.END}")
+                    print(f"{Colors.YELLOW}  ⚠ File {proxy_file} empty, using direct connection{Colors.END}")
         else:
-            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {proxy_file} not found, creating default{Colors.CYAN}{' ' * (48 - len(proxy_file))}║{Colors.END}")
+            print(f"{Colors.YELLOW}  ⚠ File {proxy_file} not found, using direct connection{Colors.END}")
+            # Buat file dengan catatan
             with open(proxy_file, 'w') as f:
-                f.write('\n'.join(default_ips))
-            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {proxy_file} with default proxies{Colors.CYAN}{' ' * (50 - len(proxy_file))}║{Colors.END}")
+                f.write('# Add proxies here (format: ip:port)\n')
+                f.write('# Example: 192.168.1.1:8080\n')
+            print(f"{Colors.GREEN}  ✓ Created {proxy_file} - add your proxies there{Colors.END}")
     except Exception as e:
-        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {proxy_file}: {e}{Colors.CYAN}{' ' * (50 - len(proxy_file) - len(str(e)))}║{Colors.END}")
+        print(f"{Colors.RED}  ✗ Error reading {proxy_file}: {e}{Colors.END}")
     
     # Baca user-agents
     try:
@@ -193,16 +193,16 @@ def parseFiles():
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ua = content
-                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ua):>3} user-agents from {ua_file}{Colors.CYAN}{' ' * (47 - len(str(len(ua))) - len(ua_file))}║{Colors.END}")
+                    print(f"{Colors.GREEN}  ✓ Loaded {len(ua)} user-agents from {ua_file}{Colors.END}")
                 else:
-                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ua_file} empty, using default{Colors.CYAN}{' ' * (50 - len(ua_file))}║{Colors.END}")
+                    print(f"{Colors.YELLOW}  ⚠ File {ua_file} empty, using default{Colors.END}")
         else:
-            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ua_file} not found, creating default{Colors.CYAN}{' ' * (48 - len(ua_file))}║{Colors.END}")
+            print(f"{Colors.YELLOW}  ⚠ File {ua_file} not found, creating default{Colors.END}")
             with open(ua_file, 'w') as f:
                 f.write('\n'.join(default_ua))
-            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {ua_file} with default user-agents{Colors.CYAN}{' ' * (45 - len(ua_file))}║{Colors.END}")
+            print(f"{Colors.GREEN}  ✓ Created {ua_file} with default user-agents{Colors.END}")
     except Exception as e:
-        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {ua_file}: {e}{Colors.CYAN}{' ' * (50 - len(ua_file) - len(str(e)))}║{Colors.END}")
+        print(f"{Colors.RED}  ✗ Error reading {ua_file}: {e}{Colors.END}")
     
     # Baca referers
     try:
@@ -211,58 +211,53 @@ def parseFiles():
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ref = content
-                    print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Loaded {len(ref):>3} referers from {ref_file}{Colors.CYAN}{' ' * (47 - len(str(len(ref))) - len(ref_file))}║{Colors.END}")
+                    print(f"{Colors.GREEN}  ✓ Loaded {len(ref)} referers from {ref_file}{Colors.END}")
                 else:
-                    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ref_file} empty, using default{Colors.CYAN}{' ' * (50 - len(ref_file))}║{Colors.END}")
+                    print(f"{Colors.YELLOW}  ⚠ File {ref_file} empty, using default{Colors.END}")
         else:
-            print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠ File {ref_file} not found, creating default{Colors.CYAN}{' ' * (48 - len(ref_file))}║{Colors.END}")
+            print(f"{Colors.YELLOW}  ⚠ File {ref_file} not found, creating default{Colors.END}")
             with open(ref_file, 'w') as f:
                 f.write('\n'.join(default_ref))
-            print(f"{Colors.CYAN}║{Colors.GREEN}  ✓ Created {ref_file} with default referers{Colors.CYAN}{' ' * (45 - len(ref_file))}║{Colors.END}")
+            print(f"{Colors.GREEN}  ✓ Created {ref_file} with default referers{Colors.END}")
     except Exception as e:
-        print(f"{Colors.CYAN}║{Colors.RED}  ✗ Error reading {ref_file}: {e}{Colors.CYAN}{' ' * (50 - len(ref_file) - len(str(e)))}║{Colors.END}")
+        print(f"{Colors.RED}  ✗ Error reading {ref_file}: {e}{Colors.END}")
     
-    print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+    proxy_status = f"{len(ips)} proxies" if ips else "Direct connection (no proxy)"
+    print(f"{Colors.CYAN}📊 Summary: {proxy_status}, {len(ua)} user-agents, {len(ref)} referers{Colors.END}\n")
     testConnection()
 
 def testConnection():
     """Testing koneksi ke URL"""
-    print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  🔗 Testing Connection{Colors.CYAN}                                               ║{Colors.END}")
-    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  Target URL: {Colors.GREEN}{url}{Colors.CYAN}{' ' * (50 - len(url))}║{Colors.END}")
+    print(f"{Colors.CYAN}🔗 Testing Connection{Colors.END}")
+    print(f"{Colors.WHITE}Target URL: {Colors.GREEN}{url}{Colors.END}")
     
     try:
         r = requests.get(url, timeout=timeout)
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Status: {Colors.GREEN}{r.status_code} {Colors.WHITE}| Size: {Colors.GREEN}{len(r.content)} bytes{Colors.CYAN}{' ' * (44 - len(str(r.status_code)) - len(str(len(r.content))))}║{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.GREEN}  ✅ Connection successful!{Colors.CYAN}{' ' * 49}║{Colors.END}")
-        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+        print(f"{Colors.WHITE}Status: {Colors.GREEN}{r.status_code} {Colors.WHITE}| Size: {Colors.GREEN}{len(r.content)} bytes{Colors.END}")
+        print(f"{Colors.GREEN}✅ Connection successful!{Colors.END}\n")
         startTesting()
     except requests.exceptions.Timeout:
-        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection timeout after {timeout}s{Colors.CYAN}{' ' * (47 - len(str(timeout)))}║{Colors.END}")
-        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}")
+        print(f"{Colors.RED}❌ Connection timeout after {timeout}s{Colors.END}")
         sys.exit(1)
     except requests.exceptions.ConnectionError:
-        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection error: Unable to reach {url}{Colors.CYAN}{' ' * (50 - len(url))}║{Colors.END}")
-        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}")
+        print(f"{Colors.RED}❌ Connection error: Unable to reach {url}{Colors.END}")
         sys.exit(1)
     except Exception as e:
-        print(f"{Colors.CYAN}║{Colors.RED}  ❌ Connection failed: {e}{Colors.CYAN}{' ' * (50 - len(str(e)))}║{Colors.END}")
-        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}")
+        print(f"{Colors.RED}❌ Connection failed: {e}{Colors.END}")
         sys.exit(1)
 
 def request_testing(index):
     """Testing request dengan rate limiting"""
     global total_requests, success_requests, failed_requests
     
-    proxy_list = ips.copy()
+    proxy_list = ips.copy() if ips else []
     proxy_index = index % len(proxy_list) if proxy_list else 0
     
     while not ex.is_set():
         try:
-            # Pilih proxy
+            # Pilih proxy hanya jika ada dan use_proxy True
             proxy = None
-            if proxy_list:
+            if use_proxy and proxy_list:
                 proxy = {
                     'http': f'http://{proxy_list[proxy_index]}',
                     'https': f'http://{proxy_list[proxy_index]}'
@@ -300,13 +295,18 @@ def request_testing(index):
                     status_color = Colors.YELLOW
             
             # Log dengan format yang rapi
-            proxy_str = proxy_list[proxy_index-1] if proxy_list else 'None'
+            proxy_str = proxy_list[proxy_index-1] if proxy_list and use_proxy else 'Direct'
             print(f"{status_color}[{index:>2}] {r.status_code:>3} | {response_time:>5.2f}s | {proxy_str}{Colors.END}")
             
             time.sleep(request_delay)
             
         except requests.exceptions.ProxyError:
             print(f"{Colors.RED}[{index:>2}] PROXY ERROR | {proxy_list[proxy_index-1] if proxy_list else 'None'}{Colors.END}")
+            # Jika proxy error, coba tanpa proxy
+            if proxy_list:
+                proxy_list.pop(proxy_index - 1)
+                if not proxy_list:
+                    print(f"{Colors.YELLOW}⚠️  No proxies left, switching to direct connection{Colors.END}")
             time.sleep(0.5)
         except requests.exceptions.Timeout:
             print(f"{Colors.YELLOW}[{index:>2}] TIMEOUT | {timeout}s{Colors.END}")
@@ -329,15 +329,14 @@ def startTesting():
     global start_time
     start_time = time.time()
     
-    print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.GREEN}  🚀 Starting FLASHFLOOD Attack{Colors.CYAN}                                     ║{Colors.END}")
-    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  Threads: {Colors.GREEN}{max_threads:>3}{Colors.CYAN} | Timeout: {Colors.GREEN}{timeout:>3}s{Colors.CYAN} | Delay: {Colors.GREEN}{request_delay:>4.1f}s{Colors.CYAN}{' ' * (47 - len(str(max_threads)) - len(str(timeout)) - len(str(request_delay)))}║{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.YELLOW}  Press Ctrl+C to stop{Colors.CYAN}{' ' * 49}║{Colors.END}")
-    print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+    proxy_status = f"{len(ips)} proxies" if ips and use_proxy else "Direct connection"
+    print(f"{Colors.GREEN}🚀 Starting FLASHFLOOD Attack{Colors.END}")
+    print(f"{Colors.WHITE}Threads: {Colors.GREEN}{max_threads}{Colors.WHITE} | Timeout: {Colors.GREEN}{timeout}s{Colors.WHITE} | Delay: {Colors.GREEN}{request_delay}s{Colors.END}")
+    print(f"{Colors.WHITE}Proxy: {Colors.GREEN}{proxy_status}{Colors.END}")
+    print(f"{Colors.YELLOW}Press Ctrl+C to stop{Colors.END}\n")
     
     threads = []
-    thread_count = min(max_threads, max(1, len(ips) if ips else 1))
+    thread_count = min(max_threads, max(1, len(ips) if ips and use_proxy else 1))
     
     print(f"{Colors.DIM}─── Request Log ───{Colors.END}")
     
@@ -354,24 +353,19 @@ def startTesting():
             if int(time.time()) % 5 == 0:
                 elapsed = time.time() - start_time
                 with lock:
-                    print(f"\n{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  📊 REAL-TIME STATISTICS{Colors.CYAN}                                      ║{Colors.END}")
-                    print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Elapsed Time : {Colors.GREEN}{elapsed:>8.1f}s{Colors.CYAN}                              ║{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Requests     : {Colors.GREEN}{total_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Success      : {Colors.GREEN}{success_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Failed       : {Colors.RED}{failed_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
+                    print(f"\n{Colors.CYAN}📊 REAL-TIME STATISTICS{Colors.END}")
+                    print(f"{Colors.WHITE}Elapsed Time : {Colors.GREEN}{elapsed:.1f}s{Colors.END}")
+                    print(f"{Colors.WHITE}Requests     : {Colors.GREEN}{total_requests:,}{Colors.END}")
+                    print(f"{Colors.WHITE}Success      : {Colors.GREEN}{success_requests:,}{Colors.END}")
+                    print(f"{Colors.WHITE}Failed       : {Colors.RED}{failed_requests:,}{Colors.END}")
                     if total_requests > 0:
                         success_rate = (success_requests / total_requests) * 100
-                        print(f"{Colors.CYAN}║{Colors.WHITE}  Success Rate : {Colors.GREEN}{success_rate:>7.2f}%{Colors.CYAN}                              ║{Colors.END}")
+                        print(f"{Colors.WHITE}Success Rate : {Colors.GREEN}{success_rate:.2f}%{Colors.END}")
                         req_per_sec = total_requests / elapsed if elapsed > 0 else 0
-                        print(f"{Colors.CYAN}║{Colors.WHITE}  Requests/s   : {Colors.GREEN}{req_per_sec:>8.2f}{Colors.CYAN}                              ║{Colors.END}")
-                    print(f"{Colors.CYAN}║{Colors.WHITE}  Active Thrd  : {Colors.YELLOW}{len([t for t in threads if t.is_alive()]):>8}{Colors.CYAN}                              ║{Colors.END}")
-                    print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+                        print(f"{Colors.WHITE}Requests/s   : {Colors.GREEN}{req_per_sec:.2f}{Colors.END}")
+                    print(f"{Colors.WHITE}Active Thrd  : {Colors.YELLOW}{len([t for t in threads if t.is_alive()])}{Colors.END}\n")
     except KeyboardInterrupt:
-        print(f"\n\n{Colors.RED}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
-        print(f"{Colors.RED}║{Colors.YELLOW}  🛑 Stopping FLASHFLOOD...{Colors.RED}                                       ║{Colors.END}")
-        print(f"{Colors.RED}╚══════════════════════════════════════════════════════════════════╝{Colors.END}")
+        print(f"\n\n{Colors.YELLOW}🛑 Stopping FLASHFLOOD...{Colors.END}")
         ex.set()
         print(f"{Colors.CYAN}⏳ Waiting for threads to finish...{Colors.END}")
         for t in threads:
@@ -379,28 +373,21 @@ def startTesting():
         
         # Final stats
         elapsed = time.time() - start_time
-        print(f"\n{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.GREEN}  ✅ FLASHFLOOD Stopped Successfully!{Colors.CYAN}                                 ║{Colors.END}")
-        print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  FINAL STATISTICS{Colors.CYAN}                                               ║{Colors.END}")
-        print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Total Time    : {Colors.GREEN}{elapsed:>8.1f}s{Colors.CYAN}                              ║{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Total Requests: {Colors.GREEN}{total_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Successful    : {Colors.GREEN}{success_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
-        print(f"{Colors.CYAN}║{Colors.WHITE}  Failed        : {Colors.RED}{failed_requests:>8,}{Colors.CYAN}                              ║{Colors.END}")
+        print(f"\n{Colors.CYAN}📊 FINAL STATISTICS{Colors.END}")
+        print(f"{Colors.WHITE}Total Time    : {Colors.GREEN}{elapsed:.1f}s{Colors.END}")
+        print(f"{Colors.WHITE}Total Requests: {Colors.GREEN}{total_requests:,}{Colors.END}")
+        print(f"{Colors.WHITE}Successful    : {Colors.GREEN}{success_requests:,}{Colors.END}")
+        print(f"{Colors.WHITE}Failed        : {Colors.RED}{failed_requests:,}{Colors.END}")
         if total_requests > 0:
             success_rate = (success_requests / total_requests) * 100
-            print(f"{Colors.CYAN}║{Colors.WHITE}  Success Rate  : {Colors.GREEN}{success_rate:>7.2f}%{Colors.CYAN}                              ║{Colors.END}")
+            print(f"{Colors.WHITE}Success Rate  : {Colors.GREEN}{success_rate:.2f}%{Colors.END}")
             req_per_sec = total_requests / elapsed if elapsed > 0 else 0
-            print(f"{Colors.CYAN}║{Colors.WHITE}  Average RPS   : {Colors.GREEN}{req_per_sec:>8.2f}{Colors.CYAN}                              ║{Colors.END}")
-        print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
+            print(f"{Colors.WHITE}Average RPS   : {Colors.GREEN}{req_per_sec:.2f}{Colors.END}")
+        print(f"{Colors.GREEN}✅ FLASHFLOOD Stopped Successfully!{Colors.END}\n")
 
 def showUsage():
     print(f"""
-{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗
-║                  CPA FLASHFLOOD v{__version__}                           ║
-║                HTTP Request Tester & Load Testing Tool           ║
-╚══════════════════════════════════════════════════════════════════╝{Colors.END}
+{Colors.CYAN}CPA FLASHFLOOD v{__version__} - HTTP Request Tester & Load Testing Tool{Colors.END}
 
 {Colors.GREEN}USAGE:{Colors.END}
     python script.py {Colors.CYAN}--url{Colors.END} <URL> {Colors.DIM}[OPTIONS]{Colors.END}
@@ -410,12 +397,14 @@ def showUsage():
     {Colors.CYAN}-t, --timeout{Colors.END} <SEC>   Timeout in seconds {Colors.DIM}(default: 10){Colors.END}
     {Colors.CYAN}--threads{Colors.END} <NUM>       Number of threads {Colors.DIM}(default: 20, max: 100){Colors.END}
     {Colors.CYAN}--delay{Colors.END} <SEC>         Delay between requests {Colors.DIM}(default: 1.0){Colors.END}
+    {Colors.CYAN}--no-proxy{Colors.END}            Disable proxy, use direct connection
     {Colors.CYAN}-h, --help{Colors.END}            Show this help message
 
 {Colors.GREEN}EXAMPLES:{Colors.END}
     {Colors.WHITE}python script.py --url https://example.com{Colors.END}
     {Colors.WHITE}python script.py --url https://example.com --timeout 5 --threads 10{Colors.END}
     {Colors.WHITE}python script.py --url https://example.com --delay 0.5 --threads 50{Colors.END}
+    {Colors.WHITE}python script.py --url https://example.com --no-proxy{Colors.END}
 
 {Colors.GREEN}FILES:{Colors.END}
     {Colors.CYAN}proxy.txt{Colors.END}         - List of proxies {Colors.DIM}(format: ip:port){Colors.END}
