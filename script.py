@@ -60,12 +60,13 @@ failed_requests = 0
 lock = threading.Lock()
 start_time = 0
 use_proxy = True
-proxy_working = True
 
 def main(argv):
+    global use_proxy
     print(BANNER)
     print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}")
-    print(f"{Colors.YELLOW}⚠️  For educational and testing purposes only!{Colors.END}\n")
+    print(f"{Colors.YELLOW}⚠️  For educational and testing purposes only!{Colors.END}")
+    print(f"{Colors.YELLOW}Use only on websites you own or have permission{Colors.END}\n")
     
     try:
         opts, args = getopt.getopt(argv, 'hv:t:', ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy'])
@@ -124,7 +125,6 @@ def main(argv):
                 print(f"{Colors.RED}✗ Error: Delay must be number{Colors.END}")
                 sys.exit(2)
         elif opt == '--no-proxy':
-            global use_proxy
             use_proxy = False
             print(f"{Colors.YELLOW}⚠️  Proxy disabled, using direct connection{Colors.END}")
     
@@ -158,26 +158,31 @@ def parseFiles():
     
     print(f"{Colors.CYAN}📁 Loading Configuration Files{Colors.END}")
     
-    # Baca proxy
-    try:
-        if os.path.exists(proxy_file) and os.stat(proxy_file).st_size > 0:
-            with open(proxy_file, 'r') as f:
-                content = [row.rstrip() for row in f if row.rstrip() and not row.startswith('#')]
-                if content:
-                    ips = content
-                    print(f"{Colors.GREEN}  ✓ Loaded {len(ips)} proxies from {proxy_file}{Colors.END}")
-                else:
-                    print(f"{Colors.YELLOW}  ⚠ No valid proxies found in {proxy_file}, using direct connection{Colors.END}")
-                    ips = []
-        else:
-            print(f"{Colors.YELLOW}  ⚠ File {proxy_file} not found, using direct connection{Colors.END}")
-            with open(proxy_file, 'w') as f:
-                f.write('# Add proxies here (format: ip:port)\n')
-                f.write('# Example: 192.168.1.1:8080\n')
-            print(f"{Colors.GREEN}  ✓ Created {proxy_file}{Colors.END}")
-    except Exception as e:
-        print(f"{Colors.RED}  ✗ Error reading {proxy_file}: {e}{Colors.END}")
+    # Baca proxy hanya jika use_proxy True
+    if use_proxy:
+        try:
+            if os.path.exists(proxy_file) and os.stat(proxy_file).st_size > 0:
+                with open(proxy_file, 'r') as f:
+                    content = [row.rstrip() for row in f if row.rstrip() and not row.startswith('#')]
+                    if content:
+                        ips = content
+                        print(f"{Colors.GREEN}  ✓ Loaded {len(ips)} proxies from {proxy_file}{Colors.END}")
+                    else:
+                        print(f"{Colors.YELLOW}  ⚠ No valid proxies found in {proxy_file}{Colors.END}")
+                        ips = []
+            else:
+                print(f"{Colors.YELLOW}  ⚠ File {proxy_file} not found{Colors.END}")
+                with open(proxy_file, 'w') as f:
+                    f.write('# Add proxies here (format: ip:port)\n')
+                    f.write('# Example: 192.168.1.1:8080\n')
+                print(f"{Colors.GREEN}  ✓ Created {proxy_file}{Colors.END}")
+        except Exception as e:
+            print(f"{Colors.RED}  ✗ Error reading {proxy_file}: {e}{Colors.END}")
+            ips = []
+    else:
+        # Jika --no-proxy, tidak usah baca proxy sama sekali
         ips = []
+        print(f"{Colors.DIM}  ℹ Proxy disabled by --no-proxy flag{Colors.END}")
     
     # Baca user-agents
     try:
@@ -215,7 +220,12 @@ def parseFiles():
     except Exception as e:
         print(f"{Colors.RED}  ✗ Error reading {ref_file}: {e}{Colors.END}")
     
-    proxy_status = f"{len(ips)} proxies" if ips and use_proxy else "Direct connection"
+    # Summary
+    if use_proxy:
+        proxy_status = f"{len(ips)} proxies" if ips else "No proxies (direct connection)"
+    else:
+        proxy_status = "Direct connection (--no-proxy)"
+    
     print(f"{Colors.CYAN}📊 Summary: {proxy_status}, {len(ua)} user-agents, {len(ref)} referers{Colors.END}\n")
     testConnection()
 
@@ -239,11 +249,10 @@ def testConnection():
         sys.exit(1)
 
 def request_testing(index):
-    global total_requests, success_requests, failed_requests, proxy_working
+    global total_requests, success_requests, failed_requests
     
     proxy_list = ips.copy() if ips and use_proxy else []
     proxy_index = index % len(proxy_list) if proxy_list else 0
-    direct_fallback = False
     
     while not ex.is_set():
         try:
@@ -251,7 +260,7 @@ def request_testing(index):
             proxy = None
             proxy_str = 'Direct'
             
-            if proxy_list and not direct_fallback:
+            if proxy_list and use_proxy:
                 proxy = {
                     'http': f'http://{proxy_list[proxy_index]}',
                     'https': f'http://{proxy_list[proxy_index]}'
@@ -273,14 +282,7 @@ def request_testing(index):
             # Kirim request
             start_time_req = time.time()
             if proxy:
-                try:
-                    r = requests.get(url, headers=headers, proxies=proxy, timeout=timeout)
-                except:
-                    # Jika proxy gagal, fallback ke direct
-                    direct_fallback = True
-                    proxy = None
-                    proxy_str = 'Direct (fallback)'
-                    r = requests.get(url, headers=headers, timeout=timeout)
+                r = requests.get(url, headers=headers, proxies=proxy, timeout=timeout)
             else:
                 r = requests.get(url, headers=headers, timeout=timeout)
             
@@ -296,20 +298,13 @@ def request_testing(index):
                     failed_requests += 1
                     status_color = Colors.YELLOW
             
+            # Log hasil
             print(f"{status_color}[{index:>2}] {r.status_code:>3} | {response_time:>5.2f}s | {proxy_str}{Colors.END}")
-            
-            # Jika proxy berhasil, kembali ke mode proxy
-            if direct_fallback and proxy_list:
-                direct_fallback = False
-                print(f"{Colors.GREEN}[{index:>2}] Switching back to proxy mode{Colors.END}")
             
             time.sleep(request_delay)
             
         except requests.exceptions.ProxyError:
             print(f"{Colors.RED}[{index:>2}] PROXY ERROR | {proxy_list[proxy_index-1] if proxy_list else 'None'}{Colors.END}")
-            if proxy_list:
-                direct_fallback = True
-                print(f"{Colors.YELLOW}[{index:>2}] Falling back to direct connection{Colors.END}")
             time.sleep(0.5)
         except requests.exceptions.Timeout:
             print(f"{Colors.YELLOW}[{index:>2}] TIMEOUT | {timeout}s{Colors.END}")
@@ -322,8 +317,6 @@ def request_testing(index):
             with lock:
                 total_requests += 1
                 failed_requests += 1
-            if proxy_list:
-                direct_fallback = True
             time.sleep(1)
         except Exception as e:
             print(f"{Colors.RED}[{index:>2}] ERROR: {str(e)[:30]}{Colors.END}")
