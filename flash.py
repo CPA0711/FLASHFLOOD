@@ -399,7 +399,7 @@ def showUsage():
     print(f"""
 {Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗
 ║                  CPA FLASHFLOOD v{__version__}                           ║
-║                HTTP Request Tester & Load Testing Tool                   ║
+║                HTTP Request Tester & Load Testing Tool             ║
 ╚══════════════════════════════════════════════════════════════════╝{Colors.END}
 
 {Colors.GREEN}USAGE:{Colors.END}
