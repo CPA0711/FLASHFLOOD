@@ -71,8 +71,8 @@ def main(argv):
     print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
     print(f"{Colors.CYAN}║{Colors.WHITE}  🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.CYAN}                     ║{Colors.END}")
     print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠️  For educational and testing purposes only!{Colors.CYAN}                    ║{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.YELLOW}  Use only on websites you own or have permission{Colors.CYAN}                  ║{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.YELLOW}  ⚠️  For educational and testing purposes only!{Colors.CYAN}                   ║{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.YELLOW}  Use only on websites you own or have permission{Colors.CYAN}                 ║{Colors.END}")
     print(f"{Colors.CYAN}╚══════════════════════════════════════════════════════════════════╝{Colors.END}\n")
     
     try:
@@ -165,7 +165,7 @@ def parseFiles():
     ref = default_ref.copy()
     
     print(f"{Colors.CYAN}╔══════════════════════════════════════════════════════════════════╗{Colors.END}")
-    print(f"{Colors.CYAN}║{Colors.WHITE}  📁 Loading Configuration Files{Colors.CYAN}                                        ║{Colors.END}")
+    print(f"{Colors.CYAN}║{Colors.WHITE}  📁 Loading Configuration Files{Colors.CYAN}                                  ║{Colors.END}")
     print(f"{Colors.CYAN}╠══════════════════════════════════════════════════════════════════╣{Colors.END}")
     
     # Baca proxy
