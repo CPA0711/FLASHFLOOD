@@ -26,7 +26,7 @@ class Colors:
     DIM = '\033[2m'
     END = '\033[0m'
 
-VERSION = (0, 4, 2)
+VERSION = (0, 4, 3)
 __version__ = '%d.%d.%d' % VERSION[0:3]
 
 if sys.version_info[0:2] < (3, 5):
@@ -49,10 +49,17 @@ ua_file = 'user-agents.txt'
 ref_file = 'referers.txt'
 log_file = 'flashflood.log'
 
-# URL untuk auto-download proxy
+# URL untuk auto-download proxy (ditambah lebih banyak sumber)
 PROXY_SOURCES = [
     'https://cdn.jsdelivr.net/gh/proxifly/free-proxy-list@main/proxies/protocols/http/data.txt',
     'https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt',
+    'https://raw.githubusercontent.com/roosterkid/openproxylist/main/HTTPS_RAW.txt',
+    'https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/http.txt',
+    'https://raw.githubusercontent.com/almightyuncle/Proxy-List/master/http.txt',
+    'https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list-raw.txt',
+    'https://raw.githubusercontent.com/maherabd/proxy-list/main/proxies/http.txt',
+    'https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt',
+    'https://raw.githubusercontent.com/zevtyardt/proxy-list/main/http.txt',
 ]
 
 ex = Event()
@@ -83,8 +90,110 @@ follow_redirects = True
 retry_count = 0
 retry_delay = 1
 auto_update_proxy = False
-proxy_update_interval = 3600
+proxy_update_interval = 900  # 15 menit (ubah dari 3600)
 last_proxy_update = 0
+
+# User-Agent yang lebih banyak (ditambah)
+DEFAULT_UA = [
+    # Chrome - Windows
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+    # Chrome - Mac
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+    # Chrome - Linux
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+    # Firefox - Windows
+    'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/120.0',
+    'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/119.0',
+    'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/118.0',
+    # Firefox - Mac
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/120.0',
+    # Firefox - Linux
+    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/120.0',
+    # Safari - Mac
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15',
+    # Safari - iPhone
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
+    # Safari - iPad
+    'Mozilla/5.0 (iPad; CPU OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPad; CPU OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+    # Edge - Windows
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.0.0',
+    # Edge - Mac
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+    # Opera
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 OPR/105.0.0.0',
+    # Android - Chrome
+    'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36',
+    'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36',
+    'Mozilla/5.0 (Linux; Android 14; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.163 Mobile Safari/537.36',
+    # Android - Firefox
+    'Mozilla/5.0 (Android 14; Mobile; rv:109.0) Gecko/120.0 Firefox/120.0',
+    'Mozilla/5.0 (Android 13; Mobile; rv:109.0) Gecko/119.0 Firefox/119.0',
+    # Linux - Other
+    'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    # Bot/Crawler
+    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)',
+    'Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)',
+    'Mozilla/5.0 (compatible; DuckDuckBot/1.0; +http://duckduckgo.com/duckduckbot)',
+    # Windows - Old
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
+]
+
+# Referer yang lebih banyak (ditambah)
+DEFAULT_REF = [
+    'https://www.google.com/',
+    'https://www.bing.com/',
+    'https://www.yahoo.com/',
+    'https://duckduckgo.com/',
+    'https://www.facebook.com/',
+    'https://www.twitter.com/',
+    'https://www.instagram.com/',
+    'https://www.linkedin.com/',
+    'https://www.youtube.com/',
+    'https://www.reddit.com/',
+    'https://www.wikipedia.org/',
+    'https://www.amazon.com/',
+    'https://www.ebay.com/',
+    'https://www.netflix.com/',
+    'https://www.spotify.com/',
+    'https://www.microsoft.com/',
+    'https://www.apple.com/',
+    'https://www.stackoverflow.com/',
+    'https://www.github.com/',
+    'https://www.pinterest.com/',
+    'https://www.tumblr.com/',
+    'https://www.whatsapp.com/',
+    'https://www.telegram.org/',
+    'https://www.discord.com/',
+    'https://www.twitch.tv/',
+    'https://www.tiktok.com/',
+    'https://www.snapchat.com/',
+    'https://www.quora.com/',
+    'https://www.medium.com/',
+    'https://www.wordpress.com/',
+]
 
 def download_proxies():
     """Download proxy list from online sources"""
@@ -95,21 +204,24 @@ def download_proxies():
     
     for source in PROXY_SOURCES:
         try:
-            print(f"{Colors.DIM}  ↳ Fetching: {source}{Colors.END}")
+            print(f"{Colors.DIM}  ↳ Fetching: {source[:50]}...{Colors.END}")
             response = requests.get(source, timeout=30)
             if response.status_code == 200:
                 proxies = [line.strip() for line in response.text.split('\n') 
                           if line.strip() and not line.startswith('#')]
                 proxies = [p.replace('http://', '').replace('https://', '') for p in proxies]
+                # Filter proxy dengan format yang valid (ip:port)
+                proxies = [p for p in proxies if ':' in p]
                 if proxies:
                     all_proxies.extend(proxies)
-                    print(f"{Colors.GREEN}  ✓ Got {len(proxies)} proxies from source{Colors.END}")
+                    print(f"{Colors.GREEN}  ✓ Got {len(proxies)} proxies{Colors.END}")
             else:
-                print(f"{Colors.YELLOW}  ⚠ Failed to fetch (status: {response.status_code}){Colors.END}")
+                print(f"{Colors.YELLOW}  ⚠ Failed (status: {response.status_code}){Colors.END}")
         except Exception as e:
-            print(f"{Colors.RED}  ✗ Error fetching: {e}{Colors.END}")
+            print(f"{Colors.RED}  ✗ Error: {str(e)[:50]}{Colors.END}")
     
     if all_proxies:
+        # Remove duplicates
         all_proxies = list(dict.fromkeys(all_proxies))
         ips = all_proxies
         last_proxy_update = time.time()
@@ -243,7 +355,7 @@ def main(argv):
                 sys.exit(2)
         elif opt == '--auto-proxy':
             auto_update_proxy = True
-            print(f"{Colors.CYAN}ℹ Auto-proxy enabled{Colors.END}")
+            print(f"{Colors.CYAN}ℹ Auto-proxy enabled (update every 15 minutes){Colors.END}")
         elif opt == '--proxy-interval':
             try:
                 proxy_update_interval = int(arg) * 60
@@ -262,23 +374,8 @@ def main(argv):
 def parseFiles():
     global ips, ua, ref
     
-    default_ua = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/121.0',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15'
-    ]
-    default_ref = [
-        'https://www.google.com/',
-        'https://www.bing.com/',
-        'https://www.yahoo.com/',
-        'https://duckduckgo.com/',
-        'https://www.facebook.com/'
-    ]
-    
-    ua = default_ua.copy()
-    ref = default_ref.copy()
+    ua = DEFAULT_UA.copy()
+    ref = DEFAULT_REF.copy()
     
     print(f"{Colors.CYAN}📁 Loading Configuration{Colors.END}")
     
@@ -307,30 +404,42 @@ def parseFiles():
         ips = []
         print(f"{Colors.DIM}  ℹ Proxy disabled{Colors.END}")
     
-    # Load user-agents
+    # Load user-agents from file if exists
     try:
         if os.path.exists(ua_file) and os.stat(ua_file).st_size > 0:
             with open(ua_file, 'r') as f:
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ua = content
-                    print(f"{Colors.GREEN}  ✓ Loaded {len(ua)} user-agents{Colors.END}")
+                    print(f"{Colors.GREEN}  ✓ Loaded {len(ua)} user-agents from file{Colors.END}")
+                else:
+                    print(f"{Colors.GREEN}  ✓ Using {len(ua)} default user-agents{Colors.END}")
+        else:
+            print(f"{Colors.GREEN}  ✓ Using {len(ua)} default user-agents{Colors.END}")
     except:
-        pass
+        print(f"{Colors.GREEN}  ✓ Using {len(ua)} default user-agents{Colors.END}")
     
-    # Load referers
+    # Load referers from file if exists
     try:
         if os.path.exists(ref_file) and os.stat(ref_file).st_size > 0:
             with open(ref_file, 'r') as f:
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ref = content
-                    print(f"{Colors.GREEN}  ✓ Loaded {len(ref)} referers{Colors.END}")
+                    print(f"{Colors.GREEN}  ✓ Loaded {len(ref)} referers from file{Colors.END}")
+                else:
+                    print(f"{Colors.GREEN}  ✓ Using {len(ref)} default referers{Colors.END}")
+        else:
+            print(f"{Colors.GREEN}  ✓ Using {len(ref)} default referers{Colors.END}")
     except:
-        pass
+        print(f"{Colors.GREEN}  ✓ Using {len(ref)} default referers{Colors.END}")
     
     proxy_status = f"{len(ips)} proxies" if ips and use_proxy else "Direct connection"
-    print(f"{Colors.CYAN}📊 Summary: {proxy_status}, {len(ua)} UAs, {len(ref)} referers{Colors.END}\n")
+    update_interval = proxy_update_interval // 60
+    print(f"{Colors.CYAN}📊 Summary: {proxy_status}, {len(ua)} UAs, {len(ref)} referers{Colors.END}")
+    if auto_update_proxy:
+        print(f"{Colors.CYAN}📊 Auto-Proxy: Enabled (updates every {update_interval} minutes){Colors.END}")
+    print()
     testConnection()
 
 def testConnection():
@@ -357,11 +466,11 @@ def testConnection():
 def update_proxies_if_needed():
     global ips, last_proxy_update
     if auto_update_proxy and (time.time() - last_proxy_update > proxy_update_interval):
-        print(f"\n{Colors.CYAN}🔄 Updating proxies...{Colors.END}")
+        print(f"\n{Colors.CYAN}🔄 Updating proxies... (every {proxy_update_interval//60} minutes){Colors.END}")
         downloaded = download_proxies()
         if downloaded:
             ips = downloaded
-            print(f"{Colors.GREEN}✅ Updated! Total: {len(ips)}{Colors.END}\n")
+            print(f"{Colors.GREEN}✅ Updated! Total: {len(ips)} proxies{Colors.END}\n")
 
 def request_testing(index):
     global total_requests, success_requests, failed_requests, status_codes
@@ -492,9 +601,12 @@ def startTesting():
     start_time = time.time()
     
     proxy_status = f"{len(ips)} proxies" if ips and use_proxy else "Direct"
+    update_interval = proxy_update_interval // 60
     print(f"{Colors.GREEN}🚀 Starting Attack{Colors.END}")
     print(f"{Colors.WHITE}Threads: {Colors.GREEN}{max_threads} | Timeout: {timeout}s | Delay: {request_delay}s{Colors.END}")
     print(f"{Colors.WHITE}Method: {Colors.GREEN}{method} | Proxy: {proxy_status}{Colors.END}")
+    if auto_update_proxy:
+        print(f"{Colors.WHITE}Auto-Proxy: {Colors.GREEN}Enabled (update every {update_interval} min){Colors.END}")
     print(f"{Colors.YELLOW}Press Ctrl+C to stop{Colors.END}\n")
     
     threads = []
@@ -527,12 +639,12 @@ def startTesting():
             try:
                 with open(log_file, 'w') as f:
                     json.dump(log_data, f, indent=2)
-                print(f"{Colors.GREEN}✅ Log saved{Colors.END}")
+                print(f"{Colors.GREEN}✅ Log saved to {log_file}{Colors.END}")
             except:
                 pass
         
         elapsed = time.time() - start_time
-        print(f"\n{Colors.CYAN}📊 FINAL{Colors.END}")
+        print(f"\n{Colors.CYAN}📊 FINAL STATISTICS{Colors.END}")
         print(f"{Colors.WHITE}Time: {Colors.GREEN}{elapsed:.1f}s{Colors.END}")
         print(f"{Colors.WHITE}Requests: {Colors.GREEN}{total_requests}{Colors.END}")
         print(f"{Colors.WHITE}Success: {Colors.GREEN}{success_requests}{Colors.END}")
@@ -541,11 +653,11 @@ def startTesting():
             rate = (success_requests / total_requests) * 100
             rps = total_requests / elapsed if elapsed > 0 else 0
             print(f"{Colors.WHITE}Success Rate: {Colors.GREEN}{rate:.1f}% | RPS: {rps:.1f}{Colors.END}")
-        print(f"{Colors.GREEN}✅ Done!{Colors.END}\n")
+        print(f"{Colors.GREEN}✅ FLASHFLOOD Stopped!{Colors.END}\n")
 
 def showUsage():
     print(f"""
-{Colors.CYAN}FLASHFLOOD v{__version__}{Colors.END}
+{Colors.CYAN}FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}
 
 {Colors.GREEN}Usage:{Colors.END}
   python flash.py --url <URL> [options]
@@ -553,24 +665,25 @@ def showUsage():
 {Colors.GREEN}Options:{Colors.END}
   --url <URL>          Target URL
   -t, --timeout <SEC>  Timeout (default: 10)
-  --threads <NUM>      Threads (default: 20)
+  --threads <NUM>      Threads (default: 20, max: 500)
   --delay <SEC>        Delay between requests (default: 1.0)
   --no-proxy           Disable proxy
   -X, --method <M>     HTTP method (GET, POST, etc.)
-  -H, --header <H>     Custom header
+  -H, --header <H>     Custom header (format: "Key: Value")
   -j, --jitter <V>     Random delay (min,max or single)
-  -l, --log            Save log
+  -l, --log            Save log to file
   --no-verify          Disable SSL verification
   --no-redirect        Disable redirects
   --retry <NUM>        Retry count
   --retry-delay <SEC>  Retry delay
-  --auto-proxy         Auto-download proxies
+  --auto-proxy         Auto-download proxies (update every 15 min)
   --proxy-interval <M> Proxy update interval (minutes)
   -h, --help           Show help
 
 {Colors.GREEN}Examples:{Colors.END}
   python flash.py --url https://httpbin.org/get --auto-proxy --threads 30 --delay 0.05
   python flash.py --url https://example.com --no-proxy --threads 10 --jitter 0.5,1.5
+  python flash.py --url https://api.example.com --method POST -H "Content-Type: application/json" --auto-proxy
 {Colors.END}""")
 
 if __name__ == '__main__':
