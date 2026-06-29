@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flashflood"
+version = "0.4.3"
+description = "HTTP Load Testing Tool"
+readme = "README.md"
+authors = [{name = "CPA0711", email = "0711.cpa@gmail.com"}]
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.7"
+dependencies = [
+    "requests>=2.28.0",
+    "urllib3>=1.26.0",
+    "colorama>=0.4.6",
+]
+
+[project.scripts]
+flashflood = "flash:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/flashflood"
+Repository = "https://github.com/yourusername/flashflood"
+Issues = "https://github.com/yourusername/flashflood/issues"
+
+[tool.black]
+line-length = 100
+target-version = ['py37', 'py38', 'py39', 'py310']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]
