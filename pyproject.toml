@@ -7,7 +7,7 @@ name = "flashflood"
 version = "0.4.3"
 description = "HTTP Load Testing Tool"
 readme = "README.md"
-authors = [{name = "CPA0711", email = "0711.cpa@gmail.com"}]
+authors = [{"CPA0711", "0711.cpa@gmail.com"}]
 license = {text = "MIT"}
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -30,9 +30,9 @@ dependencies = [
 flashflood = "flash:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/flashflood"
-Repository = "https://github.com/yourusername/flashflood"
-Issues = "https://github.com/yourusername/flashflood/issues"
+Homepage = "https://github.com/CPA0711/flashflood"
+Repository = "https://github.com/CPA0711/flashflood"
+Issues = "https://github.com/CPA0711/flashflood/issues"
 
 [tool.black]
 line-length = 100
