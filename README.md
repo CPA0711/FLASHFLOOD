@@ -1,15 +1,42 @@
-# BISMILLAHIRRAHMANIRRAHIIM
-
-
+# BISMILLAH
 # 🌊 FLASHFLOOD - HTTP Load Testing Tool
 
 [![Python](https://img.shields.io/badge/Python-3.7%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![GitHub stars](https://img.shields.io/github/stars/yourusername/flashflood)](https://github.com/yourusername/flashflood/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/yourusername/flashflood)](https://github.com/yourusername/flashflood/network)
 [![GitHub issues](https://img.shields.io/github/issues/yourusername/flashflood)](https://github.com/yourusername/flashflood/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/yourusername/flashflood)](https://github.com/yourusername/flashflood/pulls)
+[![GitHub contributors](https://img.shields.io/github/contributors/yourusername/flashflood)](https://github.com/yourusername/flashflood/graphs/contributors)
+[![GitHub last commit](https://img.shields.io/github/last-commit/yourusername/flashflood)](https://github.com/yourusername/flashflood/commits/main)
+[![GitHub release](https://img.shields.io/github/release/yourusername/flashflood)](https://github.com/yourusername/flashflood/releases)
+[![GitHub repo size](https://img.shields.io/github/repo-size/yourusername/flashflood)](https://github.com/yourusername/flashflood)
+[![Downloads](https://img.shields.io/github/downloads/yourusername/flashflood/total)](https://github.com/yourusername/flashflood/releases)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![PyPI version](https://badge.fury.io/py/flashflood.svg)](https://badge.fury.io/py/flashflood)
+[![Test](https://github.com/yourusername/flashflood/actions/workflows/python-package.yml/badge.svg)](https://github.com/yourusername/flashflood/actions/workflows/python-package.yml)
+
+<p align="center">
+  <img src="https://img.shields.io/badge/⭐-Star%20this%20repo-brightgreen?style=for-the-badge" alt="Star">
+  <img src="https://img.shields.io/badge/🐛-Report%20Issue-red?style=for-the-badge" alt="Issue">
+  <img src="https://img.shields.io/badge/💡-Feature%20Request-blue?style=for-the-badge" alt="Feature">
+</p>
 
 🚀 **FLASHFLOOD** adalah alat load testing HTTP yang powerful, ringan, dan mudah digunakan. Dirancang untuk menguji performa website dengan simulasi request HTTP secara paralel.
+
+## ⭐ **Support this Project**
+
+If you find FLASHFLOOD useful, please consider:
+
+- ⭐ **Star** this repository on GitHub
+- 🐛 **Report** issues you find
+- 💡 **Suggest** new features
+- 🔧 **Submit** pull requests
+
+[![Star on GitHub](https://img.shields.io/github/stars/yourusername/flashflood?style=social)](https://github.com/yourusername/flashflood/stargazers)
+[![Watch on GitHub](https://img.shields.io/github/watchers/yourusername/flashflood?style=social)](https://github.com/yourusername/flashflood/watchers)
+[![Fork on GitHub](https://img.shields.io/github/forks/yourusername/flashflood?style=social)](https://github.com/yourusername/flashflood/network/members)
 
 ## ✨ Features
 
@@ -23,6 +50,19 @@
 - 🌐 **Multi Platform** - Bekerja di Windows, Linux, MacOS
 - 🔄 **Auto-retry** - Retry mechanism untuk request yang gagal
 - 🎨 **Colorful Output** - Tampilan terminal yang informatif
+
+## 📊 Project Statistics
+
+[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/flashflood&type=Date)](https://star-history.com/#yourusername/flashflood&Date)
+
+| Metric | Value |
+|--------|-------|
+| ⭐ Stars | [![GitHub stars](https://img.shields.io/github/stars/yourusername/flashflood)](https://github.com/yourusername/flashflood/stargazers) |
+| 🍴 Forks | [![GitHub forks](https://img.shields.io/github/forks/yourusername/flashflood)](https://github.com/yourusername/flashflood/network) |
+| 🐛 Issues | [![GitHub issues](https://img.shields.io/github/issues/yourusername/flashflood)](https://github.com/yourusername/flashflood/issues) |
+| 🔀 PRs | [![GitHub pull requests](https://img.shields.io/github/issues-pr/yourusername/flashflood)](https://github.com/yourusername/flashflood/pulls) |
+| 👥 Contributors | [![GitHub contributors](https://img.shields.io/github/contributors/yourusername/flashflood)](https://github.com/yourusername/flashflood/graphs/contributors) |
+| 📦 Downloads | [![Downloads](https://img.shields.io/github/downloads/yourusername/flashflood/total)](https://github.com/yourusername/flashflood/releases) |
 
 ## 🚀 Quick Start
 
@@ -104,40 +144,17 @@ Direct Connection 30 27.7 100%
 With Proxy 30 2.2 59.5%
 High Load 100 50+ 95%+
 
-🛠️ Development
+🐛 Issues & Bug Reports
 
-Setup Development Environment
+Found a bug? Please report it:
 
-```bash
-# Clone repository
-git clone https://github.com/CPA0711/flashflood.git
-cd flashflood
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Run tests
-python -m pytest tests/
-```
-
-Running Tests
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=flashflood tests/
-
-# Run specific test
-pytest tests/test_flash.py
-```
+· 📌 Report Bug
+· 💡 Request Feature
+· ❓ Ask Question
 
 🤝 Contributing
+
+Kami sangat menghargai kontribusi! Silahkan baca CONTRIBUTING.md untuk panduan berkontribusi.
 
 How to Contribute
 
@@ -155,5 +172,32 @@ Distributed under MIT License. See LICENSE for more information.
 
 FLASHFLOOD hanya untuk tujuan edukasi dan testing. Gunakan hanya pada website yang Anda miliki atau memiliki izin eksplisit. Penggunaan tanpa izin untuk serangan DDoS atau aktivitas ilegal lainnya adalah melanggar hukum.
 
+🙏 Acknowledgments
+
+· requests - HTTP library
+· TheSpeedX/SOCKS-List - Proxy list
+· proxifly/free-proxy-list - Free proxy list
 
 
+
+📈 GitHub Stats
+
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=CPA0711&show_icons=true&count_private=true&hide_title=true&hide=prs&theme=radical" alt="GitHub Stats">
+</p>
+
+<p align="center">
+  <img src="https://github-readme-stats.vercel.app/api/pin/?username=CPA0711&repo=flashflood&theme=radical" alt="Repo Card">
+</p>
+
+---
+
+⭐ Jika Anda menyukai project ini, berikan star! ⭐
+
+https://img.shields.io/github/stars/CPA0711/flashflood?style=for-the-badge&logo=github
+https://img.shields.io/github/forks/CPA0711/flashflood?style=for-the-badge&logo=github
+https://img.shields.io/github/watchers/CPA0711/flashflood?style=for-the-badge&logo=github
+
+```
+
+---
