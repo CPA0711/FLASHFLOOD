@@ -14,8 +14,7 @@
 [![GitHub repo size](https://img.shields.io/github/repo-size/yourusername/flashflood)](https://github.com/yourusername/flashflood)
 [![Downloads](https://img.shields.io/github/downloads/yourusername/flashflood/total)](https://github.com/yourusername/flashflood/releases)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![PyPI version](https://badge.fury.io/py/flashflood.svg)](https://badge.fury.io/py/flashflood)
-[![Test](https://github.com/yourusername/flashflood/actions/workflows/python-package.yml/badge.svg)](https://github.com/yourusername/flashflood/actions/workflows/python-package.yml)
+[![PyPI version](https://badge.fury.io/py/flashflood.svg)](https://badge.fury.io/py/flashflood).
 
 <p align="center">
   <img src="https://img.shields.io/badge/⭐-Star%20this%20repo-brightgreen?style=for-the-badge" alt="Star">
@@ -23,7 +22,7 @@
   <img src="https://img.shields.io/badge/💡-Feature%20Request-blue?style=for-the-badge" alt="Feature">
 </p>
 
-🚀 **FLASHFLOOD** adalah alat load testing HTTP yang powerful, ringan, dan mudah digunakan. Dirancang untuk menguji performa website dengan simulasi request HTTP secara paralel.
+🚀 **FLASHFLOOD** adalah HTTP load testing tool yang powerful, ringan, dan mudah digunakan. Dirancang untuk menguji performa website dengan simulasi request HTTP secara paralel.
 
 ## ⭐ **Support this Project**
 
@@ -58,7 +57,7 @@ If you find FLASHFLOOD useful, please consider:
 | 🐛 Issues | [![GitHub issues](https://img.shields.io/github/issues/yourusername/flashflood)](https://github.com/yourusername/flashflood/issues) |
 | 🔀 PRs | [![GitHub pull requests](https://img.shields.io/github/issues-pr/yourusername/flashflood)](https://github.com/yourusername/flashflood/pulls) |
 | 👥 Contributors | [![GitHub contributors](https://img.shields.io/github/contributors/yourusername/flashflood)](https://github.com/yourusername/flashflood/graphs/contributors) |
-| 📦 Downloads | [![Downloads](https://img.shields.io/github/downloads/yourusername/flashflood/total)](https://github.com/yourusername/flashflood/releases) |
+| 📦 Downloads | [![Downloads](https://img.shields.io/github/downloads/CPA0711/flashflood/total)](https://github.com/CPA0711/flashflood/releases) |
 
 ## 🚀 Quick Start
 
@@ -133,13 +132,6 @@ python flash.py --url https://example.com --no-proxy --jitter 0.5,1.5 --threads 
 python flash.py --url https://example.com --auto-proxy --jitter 0.3,0.8 --threads 50 --delay 0.05 --log
 ```
 
-📊 Performance
-
-Mode Threads RPS Success Rate
-Direct Connection 30 27.7 100%
-With Proxy 30 2.2 59.5%
-High Load 100 50+ 95%+
-
 🐛 Issues & Bug Reports
 
 Found a bug? Please report it:
@@ -149,8 +141,6 @@ Found a bug? Please report it:
 · ❓ Ask Question
 
 🤝 Contributing
-
-Kami sangat menghargai kontribusi! Silahkan baca CONTRIBUTING.md untuk panduan berkontribusi.
 
 How to Contribute
 
@@ -196,4 +186,3 @@ https://img.shields.io/github/watchers/CPA0711/flashflood?style=for-the-badge&lo
 
 ```
 
----
