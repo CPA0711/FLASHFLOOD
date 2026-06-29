@@ -1,4 +1,4 @@
-Bismillah
+# BISMILLAHIRRAHMANIRRAHIIM
 
 
 # 🌊 FLASHFLOOD - HTTP Load Testing Tool
@@ -110,7 +110,7 @@ Setup Development Environment
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/flashflood.git
+git clone https://github.com/CPA0711/flashflood.git
 cd flashflood
 
 # Create virtual environment
@@ -157,10 +157,5 @@ Distributed under MIT License. See LICENSE for more information.
 
 FLASHFLOOD hanya untuk tujuan edukasi dan testing. Gunakan hanya pada website yang Anda miliki atau memiliki izin eksplisit. Penggunaan tanpa izin untuk serangan DDoS atau aktivitas ilegal lainnya adalah melanggar hukum.
 
-🙏 Acknowledgments
-
-· requests - HTTP library
-· TheSpeedX/SOCKS-List - Proxy list
-· proxifly/free-proxy-list - Free proxy l
 
 
