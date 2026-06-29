@@ -51,10 +51,6 @@ If you find FLASHFLOOD useful, please consider:
 - 🔄 **Auto-retry** - Retry mechanism untuk request yang gagal
 - 🎨 **Colorful Output** - Tampilan terminal yang informatif
 
-## 📊 Project Statistics
-
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/flashflood&type=Date)](https://star-history.com/#yourusername/flashflood&Date)
-
 | Metric | Value |
 |--------|-------|
 | ⭐ Stars | [![GitHub stars](https://img.shields.io/github/stars/yourusername/flashflood)](https://github.com/yourusername/flashflood/stargazers) |
