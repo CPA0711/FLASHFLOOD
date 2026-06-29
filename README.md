@@ -7,11 +7,8 @@
 ### Installation
 
 ```bash
-# Clone repository
 git clone https://github.com/CPA0711/flashflood.git
 cd flashflood
-
-# Install dependencies
 pip install -r requirements.txt
 
 # Or install with pip
