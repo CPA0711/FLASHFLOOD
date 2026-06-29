@@ -8,7 +8,7 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/flashflood.git
+git clone https://github.com/CPA0711/flashflood.git
 cd flashflood
 
 # Install dependencies
