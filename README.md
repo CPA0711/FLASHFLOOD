@@ -6,18 +6,15 @@
 
 ### Installation
 
-```bash
 git clone https://github.com/CPA0711/flashflood.git
 cd flashflood
 pip install -r requirements.txt
 
 # Or install with pip
 pip install flashflood
-```
 
 Usage
 
-```bash
 # Simple GET request
 python flash.py --url https://example.com --no-proxy
 
@@ -32,7 +29,6 @@ python flash.py --url https://example.com --no-proxy --threads 30 --log
 
 Examples
 
-```bash
 # 1. Basic testing
 python flash.py --url https://httpbin.org/get --no-proxy
 
