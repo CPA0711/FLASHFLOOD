@@ -28,7 +28,7 @@ class Colors:
     DIM = '\033[2m'
     END = '\033[0m'
 
-VERSION = (0, 4, 0)
+VERSION = (0, 4, 1)
 __version__ = '%d.%d.%d' % VERSION[0:3]
 
 if sys.version_info[0:2] < (3, 5):
@@ -90,8 +90,8 @@ verify_ssl = True
 follow_redirects = True
 max_redirects = 3
 use_keep_alive = True
-timeout_connect = 5
-timeout_read = 10
+connect_timeout = 5
+read_timeout = 10
 retry_count = 3
 retry_delay = 1
 use_random_delay = False
@@ -152,7 +152,7 @@ def download_proxies():
 def main(argv):
     global use_proxy, method, custom_headers, use_jitter, jitter_min, jitter_max, save_log
     global max_threads, timeout, request_delay, use_ssl, verify_ssl, follow_redirects
-    global max_redirects, use_keep_alive, timeout_connect, timeout_read, retry_count
+    global max_redirects, use_keep_alive, connect_timeout, read_timeout, retry_count
     global retry_delay, use_random_delay, delay_min, delay_max, use_sequential
     global batch_size, batch_delay, payloads, cookies, auto_update_proxy, proxy_update_interval
     
@@ -194,8 +194,8 @@ def main(argv):
                 arg = int(arg)
                 if arg >= 1:
                     timeout = arg
-                    timeout_connect = arg
-                    timeout_read = arg
+                    connect_timeout = arg
+                    read_timeout = arg
                 else:
                     print(f"{Colors.RED}✗ Error: Timeout must be >= 1{Colors.END}")
                     sys.exit(2)
@@ -273,15 +273,15 @@ def main(argv):
             print(f"{Colors.CYAN}ℹ Keep-Alive enabled{Colors.END}")
         elif opt == '--connect-timeout':
             try:
-                timeout_connect = int(arg)
-                print(f"{Colors.CYAN}ℹ Connect timeout: {timeout_connect}s{Colors.END}")
+                connect_timeout = int(arg)
+                print(f"{Colors.CYAN}ℹ Connect timeout: {connect_timeout}s{Colors.END}")
             except:
                 print(f"{Colors.RED}✗ Error: Invalid connect timeout{Colors.END}")
                 sys.exit(2)
         elif opt == '--read-timeout':
             try:
-                timeout_read = int(arg)
-                print(f"{Colors.CYAN}ℹ Read timeout: {timeout_read}s{Colors.END}")
+                read_timeout = int(arg)
+                print(f"{Colors.CYAN}ℹ Read timeout: {read_timeout}s{Colors.END}")
             except:
                 print(f"{Colors.RED}✗ Error: Invalid read timeout{Colors.END}")
                 sys.exit(2)
@@ -423,7 +423,6 @@ def parseFiles():
             else:
                 print(f"{Colors.YELLOW}  ⚠ File {proxy_file} not found{Colors.END}")
                 if auto_update_proxy:
-                    # Try to download if file not exists
                     downloaded = download_proxies()
                     if downloaded:
                         ips = downloaded
@@ -598,10 +597,11 @@ def request_testing(index):
                 try:
                     start_time_req = time.time()
                     r = requests.request(
-                        method, url,
+                        method=method,
+                        url=url,
                         headers=headers,
                         proxies=proxy,
-                        timeout=(timeout_connect, timeout_read),
+                        timeout=timeout,  # Use single timeout value
                         verify=ssl_verify,
                         allow_redirects=follow_redirects,
                         max_redirects=max_redirects
@@ -799,35 +799,9 @@ def showUsage():
     {Colors.CYAN}--no-proxy{Colors.END}            Disable proxy
     {Colors.CYAN}-h, --help{Colors.END}            Show this help
 
-{Colors.GREEN}ADVANCED OPTIONS:{Colors.END}
-    {Colors.CYAN}-X, --method{Colors.END} <M>      HTTP method (GET, POST, PUT, DELETE, etc.)
-    {Colors.CYAN}-H, --header{Colors.END} <H>      Custom header (format: "Key: Value")
-    {Colors.CYAN}-j, --jitter{Colors.END} <V>      Random delay (format: "min,max" or single)
-    {Colors.CYAN}-l, --log{Colors.END}             Save results to log file
-    {Colors.CYAN}-p, --payload{Colors.END} <FILE>  Load payloads from file
-    {Colors.CYAN}-c, --cookie{Colors.END} <V>      Cookie (format: "key=value" or file)
-
 {Colors.GREEN}PROXY OPTIONS:{Colors.END}
     {Colors.CYAN}--auto-proxy{Colors.END}          Automatically download proxies from online sources
     {Colors.CYAN}--proxy-interval{Colors.END} <M>  Proxy update interval in minutes (default: 60)
-
-{Colors.GREEN}NETWORK OPTIONS:{Colors.END}
-    {Colors.CYAN}--ssl{Colors.END}                  Enable SSL/TLS
-    {Colors.CYAN}--no-verify{Colors.END}           Disable SSL verification
-    {Colors.CYAN}--no-redirect{Colors.END}         Disable redirects
-    {Colors.CYAN}--keep-alive{Colors.END}          Enable Keep-Alive
-    {Colors.CYAN}--connect-timeout{Colors.END} <S> Connect timeout
-    {Colors.CYAN}--read-timeout{Colors.END} <S>    Read timeout
-
-{Colors.GREEN}RETRY OPTIONS:{Colors.END}
-    {Colors.CYAN}--retry{Colors.END} <NUM>         Number of retries (default: 0)
-    {Colors.CYAN}--retry-delay{Colors.END} <SEC>   Retry delay (default: 1.0)
-
-{Colors.GREEN}SCHEDULING OPTIONS:{Colors.END}
-    {Colors.CYAN}--random-delay{Colors.END} <V>    Random delay (min,max)
-    {Colors.CYAN}--sequential{Colors.END}          Sequential mode
-    {Colors.CYAN}--batch{Colors.END} <NUM>         Batch size (default: 10)
-    {Colors.CYAN}--batch-delay{Colors.END} <SEC>   Batch delay (default: 0.5)
 
 {Colors.GREEN}EXAMPLES:{Colors.END}
     # Auto-download proxies and test
@@ -838,9 +812,6 @@ def showUsage():
     
     # Full featured with auto-proxy
     python flash.py --url https://httpbin.org/get --auto-proxy --jitter 0.3,0.8 --threads 50 --delay 0.05 --log
-    
-    # Auto-proxy with POST and headers
-    python flash.py --url https://httpbin.org/post --method POST -H "Content-Type: application/json" --auto-proxy --threads 30
 {Colors.END}""")
 
 if __name__ == '__main__':
