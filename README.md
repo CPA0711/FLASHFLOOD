@@ -30,7 +30,7 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/flashflood.git
+git clone https://github.com/CPA0711/flashflood.git
 cd flashflood
 
 # Install dependencies
@@ -138,8 +138,6 @@ pytest tests/test_flash.py
 ```
 
 🤝 Contributing
-
-Kami sangat menghargai kontribusi! Silahkan baca CONTRIBUTING.md untuk panduan berkontribusi.
 
 How to Contribute
 
