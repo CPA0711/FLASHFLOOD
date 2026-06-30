@@ -42,7 +42,7 @@ BANNER = f"""
 ▓░░░░░▓▓▓▓▓ ▓░░░▓░▓▓▓▓░░▓░░░▓░▓░░░░░▓▓▓▓▓  ▓▓▓ ░░▓▓▓ ░▓▓▓▓ ░░ 
  ░░    ░░░░░ ░░  ░░░░░░ ░░░  ░░░░    ░░░░░  ░░░ ░ ░░░ ░░░░░ ░ 
   ░     ░░░░░ ░   ░ ░░░░  ░   ░ ░     ░░░░░  ░░░   ░░░  ░░░░  
-        CPA DEVELOPMENT
+                 CPA TOOLS DEVELOPMENT
 {Colors.END}"""
 
 # File konfigurasi
@@ -249,7 +249,7 @@ def main(argv):
     
     print(BANNER)
     print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}")
-    print(f"{Colors.YELLOW}⚠️  For educational and testing purposes only!{Colors.END}\n")
+    print(f"{Colors.YELLOW}⚠️  NOT for educational and testing purposes only!{Colors.END}\n")
     
     try:
         opts, args = getopt.getopt(argv, 'hv:t:X:H:j:l:',
@@ -655,11 +655,11 @@ def startTesting():
             rate = (success_requests / total_requests) * 100
             rps = total_requests / elapsed if elapsed > 0 else 0
             print(f"{Colors.WHITE}Success Rate: {Colors.GREEN}{rate:.1f}% | RPS: {rps:.1f}{Colors.END}")
-        print(f"{Colors.GREEN}✅ FLASHFLOOD Stopped!{Colors.END}\n")
+        print(f"{Colors.GREEN}✅ CPA FLASHFLOOD Stopped!{Colors.END}\n")
 
 def showUsage():
     print(f"""
-{Colors.CYAN}FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}
+{Colors.CYAN}CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}
 
 {Colors.GREEN}Usage:{Colors.END}
   python flash.py --url <URL> [options]
