@@ -248,8 +248,8 @@ def main(argv):
     global retry_count, retry_delay, auto_update_proxy, proxy_update_interval
     
     print(BANNER)
-    print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}")
-    print(f"{Colors.YELLOW}⚠️  NOT for educational and testing purposes only!{Colors.END}\n")
+    print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP FLOOD {Colors.END}")
+    print(f"{Colors.YELLOW}DUA TIGA KUCING BERLARI, YANG PERGI PANTANG DIRATAPI{Colors.END}\n")
     
     try:
         opts, args = getopt.getopt(argv, 'hv:t:X:H:j:l:',
