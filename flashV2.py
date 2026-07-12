@@ -256,12 +256,12 @@ def main(argv):
     print(f"{Colors.YELLOW}DUA TIGA KUCING BERLARI, YANG PERGI PANTANG DIRATAPI{Colors.END}\n")
     
         try:
-    opts, args = getopt.getopt(argv, 'hv:t:X:H:j:l:d:',
+        opts, args = getopt.getopt(argv, 'hv:t:X:H:j:l:d:',
         ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy',
          'method=', 'header=', 'jitter=', 'log', 'no-verify',
          'no-redirect', 'retry=', 'retry-delay=', 'auto-proxy',
          'proxy-interval=', 'rps=', 'data=', 'data-file='])
-except getopt.GetoptError as err:
+       except getopt.GetoptError as err:
     print(f"{Colors.RED}✗ Error: {err}{Colors.END}")
     showUsage()
     sys.exit(2)
