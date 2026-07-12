@@ -255,7 +255,6 @@ def main(argv):
     print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP FLOOD {Colors.END}")
     print(f"{Colors.YELLOW}DUA TIGA KUCING BERLARI, YANG PERGI PANTANG DIRATAPI{Colors.END}\n")
     
-    try:
         try:
     opts, args = getopt.getopt(argv, 'hv:t:X:H:j:l:d:',
         ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy',
