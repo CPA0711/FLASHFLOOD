@@ -255,7 +255,7 @@ def main(argv):
     print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP FLOOD {Colors.END}")
     print(f"{Colors.YELLOW}DUA TIGA KUCING BERLARI, YANG PERGI PANTANG DIRATAPI{Colors.END}\n")
     
-        try:
+    try:
         opts, args = getopt.getopt(argv, 'hv:t:X:H:j:l:d:',
         ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy',
          'method=', 'header=', 'jitter=', 'log', 'no-verify',
@@ -266,7 +266,7 @@ def main(argv):
     showUsage()
     sys.exit(2)
 
-for opt, arg in opts:
+    for opt, arg in opts:
     elif opt == '--rps':
         try:
             rps_limit = int(arg)
