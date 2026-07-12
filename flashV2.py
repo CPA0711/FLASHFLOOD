@@ -267,12 +267,100 @@ def main(argv):
         sys.exit(2)
 
     for opt, arg in opts:
+    if opt in ('-h', '--help'):
+        showUsage()
+        sys.exit(2)
+    elif opt in ('-v', '--url'):
+        url = urllib.parse.unquote(arg)
+    elif opt in ('-t', '--timeout'):
+        try:
+            timeout = int(arg)
+            if timeout < 1:
+                print(f"{Colors.RED}✗ Error: Timeout must be >= 1{Colors.END}")
+                sys.exit(2)
+        except ValueError:
+            print(f"{Colors.RED}✗ Error: Timeout must be integer{Colors.END}")
+            sys.exit(2)
+    elif opt == '--threads':
+        try:
+            max_threads = int(arg)
+            if max_threads < 1 or max_threads > 500:
+                print(f"{Colors.RED}✗ Error: Threads must be between 1-500{Colors.END}")
+                sys.exit(2)
+        except ValueError:
+            print(f"{Colors.RED}✗ Error: Threads must be integer{Colors.END}")
+            sys.exit(2)
+    elif opt == '--delay':
+        try:
+            request_delay = float(arg)
+            if request_delay < 0:
+                print(f"{Colors.RED}✗ Error: Delay must be >= 0{Colors.END}")
+                sys.exit(2)
+        except ValueError:
+            print(f"{Colors.RED}✗ Error: Delay must be number{Colors.END}")
+            sys.exit(2)
+    elif opt == '--no-proxy':
+        use_proxy = False
+        print(f"{Colors.YELLOW}⚠️ Proxy disabled{Colors.END}")
+    elif opt in ('--method', '-X'):
+        method = arg.upper()
+        if method not in ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH']:
+            print(f"{Colors.RED}✗ Error: Invalid method{Colors.END}")
+            sys.exit(2)
+        print(f"{Colors.CYAN}ℹ Method: {method}{Colors.END}")
+    elif opt in ('--header', '-H'):
+        try:
+            key, value = arg.split(':', 1)
+            custom_headers[key.strip()] = value.strip()
+            print(f"{Colors.CYAN}ℹ Header: {key.strip()}: {value.strip()}{Colors.END}")
+        except:
+            print(f"{Colors.RED}✗ Error: Invalid header format{Colors.END}")
+            sys.exit(2)
+    elif opt in ('--jitter', '-j'):
+        use_jitter = True
+        try:
+            if ',' in arg:
+                parts = arg.split(',')
+                jitter_min = float(parts[0])
+                jitter_max = float(parts[1])
+            else:
+                base = float(arg)
+                jitter_min = base * 0.5
+                jitter_max = base * 1.5
+            print(f"{Colors.CYAN}ℹ Jitter: {jitter_min:.2f}s - {jitter_max:.2f}s{Colors.END}")
+        except:
+            print(f"{Colors.RED}✗ Error: Invalid jitter format{Colors.END}")
+            sys.exit(2)
+    elif opt in ('--log', '-l'):
+        save_log = True
+        print(f"{Colors.CYAN}ℹ Logging enabled{Colors.END}")
+    elif opt == '--no-verify':
+        verify_ssl = False
+        print(f"{Colors.YELLOW}⚠️ SSL verification disabled{Colors.END}")
+    elif opt == '--no-redirect':
+        follow_redirects = False
+        print(f"{Colors.YELLOW}⚠️ Redirects disabled{Colors.END}")
+    elif opt == '--retry':
+        try:
+            retry_count = int(arg)
+            print(f"{Colors.CYAN}ℹ Retry: {retry_count}{Colors.END}")
+        except:
+            print(f"{Colors.RED}✗ Error: Invalid retry count{Colors.END}")
+            sys.exit(2)
+    elif opt == '--retry-delay':
+        try:
+            retry_delay = float(arg)
+            print(f"{Colors.CYAN}ℹ Retry delay: {retry_delay}s{Colors.END}")
+        except:
+            print(f"{Colors.RED}✗ Error: Invalid retry delay{Colors.END}")
+            sys.exit(2)
     elif opt == '--rps':
         try:
             rps_limit = int(arg)
             if rps_limit < 1:
                 print(f"{Colors.RED}✗ Error: RPS must be >= 1{Colors.END}")
                 sys.exit(2)
+            rps_tokens = rps_limit
             print(f"{Colors.CYAN}ℹ RPS Limit: {rps_limit}/s{Colors.END}")
         except:
             print(f"{Colors.RED}✗ Error: Invalid RPS{Colors.END}")
@@ -288,105 +376,12 @@ def main(argv):
         except:
             print(f"{Colors.RED}✗ Error: Cannot read file{Colors.END}")
             sys.exit(2)
-          
-        elif opt in ('-t', '--timeout'):
-            try:
-                timeout = int(arg)
-                if timeout < 1:
-                    print(f"{Colors.RED}✗ Error: Timeout must be >= 1{Colors.END}")
-                    sys.exit(2)
-            except ValueError:
-                print(f"{Colors.RED}✗ Error: Timeout must be integer{Colors.END}")
-                sys.exit(2)
-        elif opt == '--threads':
-            try:
-                max_threads = int(arg)
-                if max_threads < 1 or max_threads > 500:
-                    print(f"{Colors.RED}✗ Error: Threads must be between 1-500{Colors.END}")
-                    sys.exit(2)
-            except ValueError:
-                print(f"{Colors.RED}✗ Error: Threads must be integer{Colors.END}")
-                sys.exit(2)
-        elif opt == '--delay':
-            try:
-                request_delay = float(arg)
-                if request_delay < 0:
-                    print(f"{Colors.RED}✗ Error: Delay must be >= 0{Colors.END}")
-                    sys.exit(2)
-            except ValueError:
-                print(f"{Colors.RED}✗ Error: Delay must be number{Colors.END}")
-                sys.exit(2)
-        elif opt == '--no-proxy':
-            use_proxy = False
-            print(f"{Colors.YELLOW}⚠️  Proxy disabled{Colors.END}")
-        elif opt in ('--method', '-X'):
-            method = arg.upper()
-            if method not in ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH']:
-                print(f"{Colors.RED}✗ Error: Invalid method{Colors.END}")
-                sys.exit(2)
-            print(f"{Colors.CYAN}ℹ Method: {method}{Colors.END}")
-        elif opt in ('--header', '-H'):
-            try:
-                key, value = arg.split(':', 1)
-                custom_headers[key.strip()] = value.strip()
-                print(f"{Colors.CYAN}ℹ Header: {key.strip()}: {value.strip()}{Colors.END}")
-            except:
-                print(f"{Colors.RED}✗ Error: Invalid header format{Colors.END}")
-                sys.exit(2)
-        elif opt in ('--jitter', '-j'):
-            use_jitter = True
-            try:
-                if ',' in arg:
-                    parts = arg.split(',')
-                    jitter_min = float(parts[0])
-                    jitter_max = float(parts[1])
-                else:
-                    base = float(arg)
-                    jitter_min = base * 0.5
-                    jitter_max = base * 1.5
-                print(f"{Colors.CYAN}ℹ Jitter: {jitter_min:.2f}s - {jitter_max:.2f}s{Colors.END}")
-            except:
-                print(f"{Colors.RED}✗ Error: Invalid jitter format{Colors.END}")
-                sys.exit(2)
-        elif opt in ('--log', '-l'):
-            save_log = True
-            print(f"{Colors.CYAN}ℹ Logging enabled{Colors.END}")
-        elif opt == '--no-verify':
-            verify_ssl = False
-            print(f"{Colors.YELLOW}⚠️  SSL verification disabled{Colors.END}")
-        elif opt == '--no-redirect':
-            follow_redirects = False
-            print(f"{Colors.YELLOW}⚠️  Redirects disabled{Colors.END}")
-        elif opt == '--retry':
-            try:
-                retry_count = int(arg)
-                print(f"{Colors.CYAN}ℹ Retry: {retry_count}{Colors.END}")
-            except:
-                print(f"{Colors.RED}✗ Error: Invalid retry count{Colors.END}")
-                sys.exit(2)
-        elif opt == '--retry-delay':
-            try:
-                retry_delay = float(arg)
-                print(f"{Colors.CYAN}ℹ Retry delay: {retry_delay}s{Colors.END}")
-            except:
-                print(f"{Colors.RED}✗ Error: Invalid retry delay{Colors.END}")
-                sys.exit(2)
-        elif opt == '--auto-proxy':
-            auto_update_proxy = True
-            print(f"{Colors.CYAN}ℹ Auto-proxy enabled (update every 15 minutes){Colors.END}")
-        elif opt == '--proxy-interval':
-            try:
-                proxy_update_interval = int(arg) * 60
-                print(f"{Colors.CYAN}ℹ Proxy interval: {arg} minutes{Colors.END}")
-            except:
-                print(f"{Colors.RED}✗ Error: Invalid interval{Colors.END}")
-                sys.exit(2)
-    
+
     if not url:
         print(f"{Colors.RED}✗ Error: URL is required!{Colors.END}")
         showUsage()
         sys.exit(2)
-    
+
     parseFiles()
 
 def parseFiles():
