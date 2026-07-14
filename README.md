@@ -5,8 +5,12 @@
 ## 🚀 Quick Start
 
 git clone https://github.com/CPA0711/flashflood.git
+
 cd flashflood
+
 pip install -r requirements.txt
+
+python flash.py --url https://example.com --no-proxy
 
 Or install with pip
 
